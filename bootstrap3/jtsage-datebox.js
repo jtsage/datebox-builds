@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-4.1.2
+ * JTSage-DateBox-4.2.0
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Sun Jun 18 2017 14:28:10 UTC
+ * Date: Sun Jun 18 2017 23:40:41 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
@@ -152,6 +152,7 @@
             bootstrapDropdown: true,
             bootstrapDropdownRight: true,
             bootstrapModal: false,
+            bootstrapResponsive: true,
             calNextMonthIcon: "plus",
             calPrevMonthIcon: "minus",
             useInlineAlign: "left",
@@ -601,8 +602,30 @@
                     return false;
                 }
             }
+            if (o.bootstrapResponsive === true) {
+                if ($(window).width() > 768) {
+                    o.bootstrapModal = false;
+                    o.bootstrapDropdown = true;
+                } else {
+                    o.bootstrapModal = true;
+                    o.bootstrapDropdown = false;
+                }
+            }
+            if (o.bootstrapDropdown === false && o.bootstrapModal === true) {
+                w.d.mainWrap.css({
+                    width: "100%"
+                });
+                w.d.modalWrap = $('<div id="jtdb-' + this.uuid + '" class="modal fade">' + '<div class="modal-dialog" role="document">' + '<div class="modal-content">' + "</div></div></div>").addClass(o.useAnimation ? o.transition : "");
+                w.d.modalWrap.find(".modal-content").append(w.d.mainWrap);
+                w.d.modalWrap.appendTo($("body")).on("shown.bs.modal", function() {
+                    basepop.afteropen.call();
+                }).modal({
+                    backdrop: "static"
+                });
+                w.d.modalWrap.modal("show");
+            }
             if (o.bootstrapDropdown === true && o.bootstrapModal === false) {
-                w.d.mainWrap.addClass("dropdown-menu").addClass(o.useAnimation ? o.transition : "").addClass(o.bootstrapDropdownRight === true ? "dropdown-menu-right" : "").appendTo(w.d.wrap).on(o.tranDone, function() {
+                w.d.mainWrap.removeAttr("style").addClass("dropdown-menu").addClass(o.useAnimation ? o.transition : "").addClass(o.bootstrapDropdownRight === true ? "dropdown-menu-right" : "").appendTo(w.d.wrap).on(o.tranDone, function() {
                     if (w.d.mainWrap.is(":visible")) {
                         basepop.afteropen.call();
                     } else {
@@ -658,6 +681,13 @@
                 basepop.afterclose = function() {
                     return true;
                 };
+            }
+            if (o.bootstrapDropdown === false && o.bootstrapModal === true) {
+                w.d.modalWrap.on("hidden.bs.modal", function() {
+                    basepop.afterclose.call();
+                    w.d.modalWrap.remove();
+                });
+                w.d.modalWrap.modal("hide");
             }
             if (o.bootstrapDropdown === true && o.bootstrapModal === false) {
                 if (o.useAnimation === true) {

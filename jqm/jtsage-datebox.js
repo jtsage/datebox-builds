@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-4.1.2
+ * JTSage-DateBox-4.2.0
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Sun Jun 18 2017 14:28:10 UTC
+ * Date: Sun Jun 18 2017 23:40:41 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
