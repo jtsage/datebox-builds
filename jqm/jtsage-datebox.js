@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-4.1.0
+ * JTSage-DateBox-4.1.1
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Thu Jan 5 2017 17:22:44 UTC
+ * Date: Tue May 23 2017 15:18:16 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
@@ -16,9 +16,10 @@
     $.widget("jtsage.datebox", {
         initSelector: "input[data-role='datebox']",
         options: {
-            version: "4.1.0",
+            version: "4.1.1",
             jqmVersion: "1.4.5",
             bootstrapVersion: "3.3.7",
+            bootstrap4Version: "4.0.0a6",
             jqmuiWidgetVersion: "1.11.4",
             theme: false,
             themeDefault: "a",
@@ -307,12 +308,15 @@
         _destroy: function() {
             var w = this, o = this.options, button = this.d.wrap.find("a");
             w.d.wrap.removeClass("ui-input-has-clear");
+            button.off();
             button.remove();
             if (o.lockInput) {
                 w.d.input.removeAttr("readonly");
             }
             w.d.input.off("datebox").off("focus.datebox").off("blur.datebox").off("change.datebox");
-            w.d.mainWrap.popup("destroy");
+            try {
+                w.d.mainWrap.popup("destroy");
+            } catch (e) {}
             $(document).off(w.drag.eMove).off(w.drag.eEnd).off(w.drag.eEndA);
         },
         _create: function() {
@@ -1815,6 +1819,7 @@
                                 return "ui-input-text ui-body-" + o.themeInput + " ui-mini";
 
                               case "bootstrap":
+                              case "bootstrap4":
                                 return o.themeInput;
 
                               default:
@@ -1838,6 +1843,13 @@
                     allControls.addClass("row");
                     allControls.find("." + uid + "datebox-group").each(function() {
                         $(this).addClass("col-xs-" + 12 / cnt);
+                    });
+                    break;
+
+                  case "bootstrap4":
+                    allControls.addClass("row");
+                    allControls.find("." + uid + "datebox-group").each(function() {
+                        $(this).addClass("px-0 col-sm-" + 12 / cnt);
                     });
                     break;
 
@@ -1939,7 +1951,7 @@
             flipbox: function() {
                 var i, y, hRow, tmp, hRowIn, stdPos, controlButtons, w = this, o = this.options, g = this.drag, cDurS = {}, normDurPositions = [ "d", "h", "i", "s" ], dur = o.mode === "durationflipbox" ? true : false, uid = "ui-datebox-", flipBase = $("<div class='ui-overlay-shadow'><ul></ul></div>"), ctrl = $("<div>", {
                     "class": uid + "flipcontent"
-                }), ti = w.theDate.getTime() - w.initDate.getTime(), themeType = "" + (w.baseMode === "jqm" ? "ui-body-" : "") + (w.baseMode === "bootstrap" ? "bg-" : ""), cDur = w._dur(ti < 0 ? 0 : ti), currentTerm, currentText;
+                }), ti = w.theDate.getTime() - w.initDate.getTime(), themeType = "" + (w.baseMode === "jqm" ? "ui-body-" : "") + (w.baseMode === "bootstrap" || w.baseMode === "bootstrap4" ? "bg-" : ""), cDur = w._dur(ti < 0 ? 0 : ti), currentTerm, currentText;
                 if (ti < 0) {
                     w.lastDuration = 0;
                     if (dur) {
@@ -2724,6 +2736,7 @@
                     return o.btnCls + o.themeDate + o.icnCls + o.calNextMonthIcon;
 
                   case "bootstrap":
+                  case "bootstrap4":
                     return o.btnCls + o.themeDate + " pull-" + (w.__("isRTL") ? "left" : "right");
 
                   default:
@@ -2755,6 +2768,7 @@
                     return o.btnCls + o.themeDate + o.icnCls + o.calPrevMonthIcon;
 
                   case "bootstrap":
+                  case "bootstrap4":
                     return o.btnCls + o.themeDate + " pull-" + (w.__("isRTL") ? "right" : "left");
 
                   default:
@@ -2861,6 +2875,23 @@
                 }
                 break;
 
+              case "bootstrap4":
+                pickerControl.i.find("select").addClass("form-control form-control-sm input-sm").css({
+                    marginTop: "3px",
+                    "float": "left",
+                    height: "auto"
+                }).first().css({
+                    width: "60%"
+                }).end().last().css({
+                    width: "40%"
+                });
+                if (o.calNoHeader && o.calUsePickersIcons) {
+                    w.d.intHTML.find("." + uid + "gridheader").append(pickerControl);
+                } else {
+                    pickerControl.appendTo(w.d.intHTML);
+                }
+                break;
+
               case "jqm":
                 pickerControl.i.controlgroup({
                     mini: true,
@@ -2912,6 +2943,7 @@
                 break;
 
               case "bootstrap":
+              case "bootstrap4":
                 listControl.find("select").addClass("form-control input-sm");
                 break;
             }
@@ -3089,6 +3121,7 @@
                 switch (w.baseMode) {
                   case "jqm":
                   case "bootstrap":
+                  case "bootstrap4":
                     return o.icnCls + (direction > 0 ? o.calNextMonthIcon : o.calPrevMonthIcon);
 
                   default:
@@ -3108,10 +3141,11 @@
             });
         },
         _fbox_pos: function() {
-            var fixer, element, first, w = this, parentHeight = this.d.intHTML.find(".ui-datebox-flipcontent").innerHeight();
+            var fixer, element, first, placement = 0, w = this, adj = w.baseMode === "bootstrap4" ? 5 : 0, parentHeight = this.d.intHTML.find(".ui-datebox-flipcontent").innerHeight();
             w.d.intHTML.find(".ui-datebox-flipcenter").each(function() {
                 element = $(this);
-                element.css("top", (parentHeight / 2 - element.innerHeight() / 2 - 3) * -1);
+                placement = (parentHeight / 2 - element.innerHeight() / 2 - 3) * -1 + adj;
+                element.css("top", placement);
             });
             w.d.intHTML.find("ul").each(function() {
                 element = $(this);
@@ -3182,7 +3216,7 @@
                 } else {
                     top = ech.find("div").first();
                 }
-                tot = ech.find("div").size() * top.outerWidth();
+                tot = ech.find("div").length * top.outerWidth();
                 if (fixer > 0) {
                     tot = fixer;
                 }

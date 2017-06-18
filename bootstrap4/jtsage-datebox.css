@@ -8,7 +8,6 @@
  * Released under the MIT license.
  * https://github.com/jtsage/jquery-mobile-datebox/blob/master/LICENSE.txt
  *
- * jQueryUI Framework Styles
  */
  
 /* 
@@ -18,34 +17,16 @@
  * and are not specific to any one mode.
  */
 
-.datebox-input {
-	display: inline;
-}
-
-.datebox-input-icon {
-	display: inline;
-}
-
-.datebox-input-icon span {
-	display: inline-block;
-	margin-left: -1em;
-	vertical-align: middle;
-}
 .ui-datebox-container { 
 	width: 290px;
 	-webkit-transform:translate3d(0,0,0);
 }
-.ui-datebox-container .modal-header {
-	padding: 8px 15px;
-}
-
 .ui-datebox-header {
-	text-align: center;
+	padding-top: .5rem;
 }
-.ui-datebox-header h4 { 
-	margin: 0;
-	padding: 3px;
-}
+/*.ui-datebox-container .modal-header {
+	padding: 8px 15px;
+} */
 
 
 
@@ -83,29 +64,6 @@ div.ui-datebox-container.ui-datebox-inline {
 	display: inline-block;
 }
 
-.ui-datebox-gridlabel h4 {
-	margin: 10px;
-}
-.ui-datebox-gridminus, .ui-datebox-gridplus-rtl {
-	margin-top: 10px;
-	width: 38px;
-	display: inline-block;
-	float: left;
-}
-
-.ui-datebox-gridplus, .ui-datebox-gridminus-rtl {
-	margin-top: 10px;
-	width: 38px;
-	display: inline-block;
-	float: right;
-}
-
-.ui-datebox-cal-pickers fieldset {
-	margin: 0;
-	padding: 10px;
-	border: none;
-}
-
 .ui-datebox-grid { 
 	clear: both; 
 	margin-bottom: 5px; 
@@ -132,21 +90,13 @@ div.ui-datebox-container.ui-datebox-inline {
 .ui-datebox-controls {
 	padding: 0px 3px;
 	width: 100%;
-	margin-bottom: 10px;
-	text-align: center;
 }
 
-.ui-datebox-pickcontrol {
-	text-align: center;
-	margin-top: 3px;
-	margin-bottom: 3px;
-}
 .ui-datebox-griddate { 
-	width: 39px;
+	width: 40px;
 	height: 30px;
 	line-height: 30px;
 	padding: 0;
-	margin: 0;
 	display: inline-block;
 	vertical-align: middle;
 	text-align: center;
@@ -157,7 +107,7 @@ div.ui-datebox-container.ui-datebox-inline {
 }
 
 .ui-datebox-griddate-week { 
-	width: 34px;
+	width: 35px;
 	height: 30px;
 	line-height: 30px; 
 	display: inline-block;
@@ -184,42 +134,45 @@ div.ui-datebox-container.ui-datebox-inline {
  * These are specific to datebox, timebox, and durationbox
  */
 
-.ui-datebox-datebox-groups {
+.ui-datebox-datebox-groups.row {
 	margin-right: 5px;
 	margin-left: 5px;
 	margin-bottom: 10px;
 }
 
+.ui-datebox-datebox-group.col-xs-3, .ui-datebox-datebox-group.col-xs-4 {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+div.ui-datebox-datebox-button {
+	width: 100%;
+	margin: 0;
+}
 
 .ui-datebox-datebox-groups input {
 	text-align: center;
-	width: 90%;
-	margin-top: 3px;
-	margin-bottom: 3px;
 }
 
-.ui-datebox-datebox-button {
-	width: 80%;
-	margin-right: auto;
-	margin-left: auto;
-	padding-top: .2em;
-	padding-bottom: .2em;
-} 
-.ui-datebox-datebox-button span {
-	margin-left: auto;
-	margin-right: auto;
-}
 .ui-datebox-datebox-groups label {
 	text-align: center;
-	width: 90%;
+	width: 100%;
 	margin-bottom: 0px;
 	border: 1px solid #ccc;
 }
-
-.ui-datebox-datebox-group {
-	width: 33.3333%;
-	display: inline-block;
-	text-align: center;
+div.ui-datebox-datebox-button.glyphicon-plus {
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
+	-webkit-border-bottom-right-radius: 0;
+	-webkit-border-bottom-left-radius: 0;
+	top: 0px;
+}
+div.ui-datebox-datebox-button.glyphicon-minus {
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+	-webkit-border-top-right-radius: 0;
+	-webkit-border-top-left-radius: 0;
+	top: 0px;
 }
 .ui-datebox-header h4 {
 	text-align: center;
@@ -239,18 +192,17 @@ div.ui-datebox-container.ui-datebox-inline {
 	width: 260px;
 	height: 40px;
 	border: 1px solid #EEEEEE;
-	background-color: rgba(255,255,255,.15);
 	margin-right: auto;
 	margin-left: auto;
 	position: relative;
-	-webkit-box-shadow: 0 0 12px rgba(0,0,0,.6); */
+	-webkit-box-shadow: 0 0 12px rgba(0,0,0,.6);
     -moz-box-shadow: 0 0 12px rgba(0,0,0,.6);
     box-shadow: 0 0 12px rgba(0,0,0,.6);
 }
 
 .ui-datebox-flipcontent {
 	text-align: center;
-	height: 125px;
+	height: 135px;
 	margin-bottom: -40px;
 }
 .ui-datebox-flipcontent li {
@@ -261,7 +213,7 @@ div.ui-datebox-container.ui-datebox-inline {
 	margin-left: 3px;
 	margin-right: 3px;
 	width: 77px;
-	height: 120px;
+	height: 130px;
 	display: inline-block;
 	text-align: center;
 	zoom: 1;
@@ -354,37 +306,3 @@ div.ui-datebox-container.ui-datebox-inline {
 }
 
 span.ui-datebox-nopad { margin: 0 }
-.ui-datebox-repad { margin: .5em .4375em }
-
-
-
-/* Very Basic Themes 
- *
- * Don't use these, they are terrible
- *
- * .ui-datebox-container is to target only
- * datebox elements.  Due to how jQueryUI is
- * set up, a single class name probably isn't
- * specific enough to ever apply.
- *
- */
-
-.ui-datebox-container .ui-datebox-theme-red {
-	background-color: red;
-	background-image: none;
-	color: black;
-}
-
-.ui-datebox-container .ui-datebox-theme-green {
-	background-color: green;
-	background-image: none;
-	color: black;
-}
-
-.ui-datebox-container .ui-datebox-theme-yellow {
-	background-color: yellow;
-	background-image: none;
-	color: black;
-}
-
-

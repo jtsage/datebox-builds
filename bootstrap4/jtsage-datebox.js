@@ -25,7 +25,7 @@
             themeDefault: "a",
             themeHeader: "a",
             themeSetButton: "a",
-            themeCloseButton: "",
+            themeCloseButton: "secondary",
             mode: false,
             transition: "fade",
             useAnimation: true,
@@ -52,7 +52,7 @@
             useImmediate: false,
             useButton: true,
             buttonIcon: false,
-            useFocus: true,
+            useFocus: false,
             useSetButton: true,
             useCancelButton: false,
             useTodayButton: false,
@@ -133,36 +133,37 @@
                     calHeaderFormat: "%B %Y"
                 }
             },
-            themeDateToday: "ui-state-highlight",
-            themeDayHigh: "",
-            themeDatePick: "ui-state-active",
-            themeDateHigh: "",
-            themeDateHighAlt: "",
-            themeDateHighRec: "",
-            themeDate: "",
-            themeButton: "",
-            themeInput: "",
-            themeClearButton: "",
-            themeCancelButton: "",
-            themeTomorrowButton: "",
-            themeTodayButton: "",
+            themeDateToday: "info",
+            themeDayHigh: "warning",
+            themeDatePick: "info",
+            themeDateHigh: "warning",
+            themeDateHighAlt: "danger",
+            themeDateHighRec: "warning",
+            themeDate: "secondary",
+            themeButton: "secondary",
+            themeInput: "default",
+            themeClearButton: "secondary",
+            themeCancelButton: "secondary",
+            themeTomorrowButton: "secondary",
+            themeTodayButton: "secondary",
             buttonIconDate: "calendar",
-            buttonIconTime: "time",
-            disabledState: "ui-state-disabled",
+            buttonIconTime: "clock-o",
+            disabledState: "disabled",
+            bootstrapDropdown: true,
+            bootstrapDropdownRight: true,
+            bootstrapModal: false,
             calNextMonthIcon: "plus",
             calPrevMonthIcon: "minus",
             useInlineAlign: "left",
-            useAnimationTime: 400,
-            btnCls: " ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only ",
-            icnCls: " ui-icon ui-icon-",
+            btnCls: " btn btn-sm btn-",
+            icnCls: " fa fa-",
             s: {
                 cal: {
-                    prevMonth: "<button class='ui-button ui-widget ui-state-default ui-corner-all'><span title='{text}' class='ui-icon ui-icon-{icon}'></span></button>",
-                    nextMonth: "<button class='ui-button ui-widget ui-state-default ui-corner-all'><span title='{text}' class='ui-icon ui-icon-{icon}'></span></button>",
+                    prevMonth: "<span title='{text}' class='fa fa-{icon}'></span>",
+                    nextMonth: "<span title='{text}' class='fa fa-{icon}'></span>",
                     botButton: "<a href='#' class='{cls}' role='button'><span class='{icon}'></span> {text}</a>"
                 }
             },
-            useSelectMenu: false,
             tranDone: "webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend",
             calHighToday: true,
             calHighPick: true,
@@ -237,11 +238,11 @@
                 return this.options[opt];
             }
         },
-        baseMode: "jqueryui",
+        baseMode: "bootstrap4",
         _stdBtn: {
             cancel: function() {
                 var w = this, o = this.options;
-                return $("<div class='" + o.btnCls + "'>" + "<span class='ui-button-text'>" + w.__("cancelButton") + "</span>" + "</div>").addClass(o.themeCancelButton).on(o.clickEventAlt, function(e) {
+                return $("<a href='#' role='button' class='btn btn-" + o.themeCancelButton + "'><span class='" + o.icnCls + "remove'></span> " + w.__("cancelButton") + "</a>").on(o.clickEventAlt, function(e) {
                     e.preventDefault();
                     w._t({
                         method: "close",
@@ -251,9 +252,8 @@
             },
             clear: function() {
                 var w = this, o = this.options;
-                return $("<div class='" + o.btnCls + "'>" + "<span class='ui-button-text'>" + w.__("clearButton") + "</span>" + "</div>").addClass(o.themeClearButton).on(o.clickEventAlt, function(e) {
+                return $("<a href='#' role='button' class='btn btn-" + o.themeClearButton + "'><span class='" + o.icnCls + "eraser'></span> " + w.__("clearButton") + "</a>").on(o.clickEventAlt, function(e) {
                     e.preventDefault();
-                    e.stopPropagation();
                     w.d.input.val("");
                     w._t({
                         method: "clear"
@@ -269,7 +269,7 @@
                 if (typeof trigger === "undefined") {
                     trigger = false;
                 }
-                return $("<div class='" + o.btnCls + "'>" + "<span class='ui-button-text'>" + txt + "</span>" + "</div>").addClass("" + (w.dateOK === true ? "" : "ui-state-disabled")).addClass(o.themeCloseButton).on(o.clickEventAlt, function(e) {
+                return $("<a href='#' role='button' class='btn btn-" + o.themeCloseButton + "'><span class='" + o.icnCls + "check'></span> " + txt + "</a>").addClass("" + (w.dateOK === true ? "" : "disabled")).on(o.clickEventAlt, function(e) {
                     e.preventDefault();
                     if (w.dateOK === true) {
                         if (trigger === false) {
@@ -289,7 +289,7 @@
             },
             today: function() {
                 var w = this, o = this.options;
-                return $("<div class='" + o.btnCls + "'>" + "<span class='ui-button-text'>" + w.__("todayButtonLabel") + "</span>" + "</div>").addClass(o.themeTodayButton).on(o.clickEventAlt, function(e) {
+                return $("<a href='#' role='button' class='btn btn-" + o.themeTodayButton + "'><span class='" + o.icnCls + "send'></span> " + w.__("todayButtonLabel") + "</a>").on(o.clickEventAlt, function(e) {
                     e.preventDefault();
                     w.theDate = w._pa([ 0, 0, 0 ], new w._date());
                     w.calBackDate = false;
@@ -300,7 +300,7 @@
             },
             tomorrow: function() {
                 var w = this, o = this.options;
-                return $("<div class='" + o.btnCls + "'>" + "<span class='ui-button-text'>" + w.__("tomorrowButtonLabel") + "</span>" + "</div>").addClass(o.themeTomorrowButton).on(o.clickEventAlt, function(e) {
+                return $("<a href='#' role='button' class='btn btn-" + o.themeTomorrowButton + "'><span class='" + o.icnCls + "send'></span> " + w.__("tomorrowButtonLabel") + "</a>").on(o.clickEventAlt, function(e) {
                     e.preventDefault();
                     w.theDate = w._pa([ 0, 0, 0 ], new w._date()).adj(2, 1);
                     w.calBackDate = false;
@@ -376,7 +376,7 @@
             if (o.showInitialValue) {
                 w.d.input.val(w._formatter(w.__fmt(), w.theDate));
             }
-            w.d.wrap = w.d.input.wrap("<div class='datebox-input'>").parent();
+            w.d.wrap = w.d.input.wrap("<div class='input-group'>").parent();
             if (o.mode !== false) {
                 if (o.buttonIcon === false) {
                     if (o.mode.substr(0, 4) === "time" || o.mode.substr(0, 3) === "dur") {
@@ -387,7 +387,7 @@
                 }
             }
             if (o.useButton) {
-                $("<div class='datebox-input-icon'>" + "<span class='" + o.icnCls + o.buttonIcon + "'></span>" + "</div>").attr("title", w.__("tooltip")).on(o.clickEvent, function(e) {
+                $("<div class='input-group-addon'>" + "<span class='" + o.icnCls + o.buttonIcon + "'></span>" + "</div>").attr("title", w.__("tooltip")).on(o.clickEvent, function(e) {
                     e.preventDefault();
                     if (o.useFocus) {
                         w.d.input.focus();
@@ -431,14 +431,6 @@
                 w.disable();
             }
             w.applyMinMax(false, false);
-            w.d.input.on("datebox", function(e, p) {
-                var w = $(this).data("jtsage-datebox"), o = $(this).data("jtsage-datebox").options;
-                if (p.method === "postrefresh" && o.useSelectMenu) {
-                    w.d.intHTML.find("select").each(function() {
-                        $(this).selectmenu();
-                    });
-                }
-            });
             if (o.useInline || o.useInlineBlind) {
                 w.open();
             }
@@ -470,13 +462,13 @@
             if (w.__("useArabicIndic") === true) {
                 w._doIndic();
             }
-            if (o.useInline && w.initDone === false) {
+            if ((o.useInline || o.useInlineBlind) && w.initDone === false) {
                 w.d.mainWrap.append(w.d.intHTML);
                 if (o.hideContainer) {
                     if (o.useHeader) {
                         w.d.mainWrap.prepend($(w._spf("<div class='{c1}'><h4 class='{c2}'>{text}</h4></div>", {
-                            c1: "ui-datebox-header",
-                            c2: "ui-datebox-header-title",
+                            c1: "modal-header",
+                            c2: "modal-title text-center",
                             text: w.d.headerText
                         })));
                     }
@@ -508,7 +500,6 @@
                     break;
                 }
                 w.d.mainWrap.removeClass("ui-datebox-hidden ui-overlay-shadow");
-                w.d.mainWrap.addClass("ui-corner-all ui-widget ui-widget-content");
                 if (o.useInline) {
                     w.d.mainWrap.addClass("ui-datebox-inline").css("zIndex", "auto");
                     if (!o.hideInput && !o.hideContainer) {
@@ -547,13 +538,21 @@
                 return false;
             }
             w.d.mainWrap.empty();
-            w.d.mainWrap.addClass("ui-corner-all ui-widget ui-widget-content");
-            w.d.mainWrap.append(w.d.intHTML).css({
-                zIndex: o.zindex,
-                position: "absolute",
-                top: w.d.input.offset().top + w.d.input.height,
-                left: w.d.input.offset().left
-            });
+            if (o.useHeader) {
+                w.d.mainWrap.append($(w._spf("<div class='{c1}'><h5 class='{c2}'>{text}</h5>" + "<button type='button' class='btn btn-sm btn-secondary closer'>" + "<span aria-hidden='true'>&times;</span></button></div>", {
+                    c1: "modal-header",
+                    c2: "modal-title",
+                    c3: "closer" + o.icnCls + "remove pull-" + o.popupButtonPosition,
+                    text: w.d.headerText
+                }))).find(".closer").on(o.clickEventAlt, function(e) {
+                    e.preventDefault();
+                    w._t({
+                        method: "close",
+                        closeCancel: true
+                    });
+                });
+            }
+            w.d.mainWrap.append(w.d.intHTML).css("zIndex", o.zindex);
             w._t({
                 method: "postrefresh"
             });
@@ -600,29 +599,41 @@
                     return false;
                 }
             }
-            w.d.mainWrap.css("display", "none").appendTo(w.d.wrap);
-            w.d.backdrop = $("<div></div>").css({
-                position: "fixed",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                right: 0
-            }).addClass("ui-widget-overlay").appendTo("body").on(o.clickEvent, function(e) {
-                e.preventDefault();
-                w._t({
-                    method: "close",
-                    closeCancel: true
+            if (o.bootstrapDropdown === true && o.bootstrapModal === false) {
+                w.d.mainWrap.addClass("dropdown-menu").addClass(o.useAnimation ? o.transition : "").addClass(o.bootstrapDropdownRight === true ? "dropdown-menu-right" : "").appendTo(w.d.wrap).on(o.tranDone, function() {
+                    if (w.d.mainWrap.is(":visible")) {
+                        basepop.afteropen.call();
+                    } else {
+                        basepop.afterclose.call();
+                        w.d.wrap.removeClass("show");
+                    }
                 });
-            });
-            window.setTimeout(function() {
-                w.d.mainWrap.slideDown(o.useAnimation === true ? o.useAnimationTime : 0, function() {
-                    basepop.afteropen.call();
+                w.d.wrap.addClass("show");
+                w.d.backdrop = $("<div class='jtsage-datebox-backdrop-div'></div>").css({
+                    position: "fixed",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    right: 0
+                }).appendTo("body").on(o.clickEvent, function(e) {
+                    e.preventDefault();
+                    w._t({
+                        method: "close",
+                        closeCancel: true
+                    });
                 });
-            }, 0);
+                window.setTimeout(function() {
+                    w.d.mainWrap.addClass("show");
+                }, 0);
+            }
         },
         close: function() {
             var w = this, o = this.options, basepop = {};
             w.calBackDate = false;
+            if (o.useInlineBlind) {
+                w.d.mainWrap.slideUp();
+                return true;
+            }
             if (o.useInline || w.d.intHTML === false) {
                 return true;
             }
@@ -646,10 +657,22 @@
                     return true;
                 };
             }
-            w.d.backdrop.remove();
-            w.d.mainWrap.slideUp(o.useAnimation === true ? o.useAnimationTime : 0, function() {
-                basepop.afterclose.call();
-            });
+            if (o.bootstrapDropdown === true && o.bootstrapModal === false) {
+                if (o.useAnimation === true) {
+                    w.d.mainWrap.removeClass("show");
+                    w.d.backdrop.remove();
+                    $(".jtsage-datebox-backdrop-div").remove();
+                    window.setTimeout(function() {
+                        w.d.wrap.removeClass("show");
+                        basepop.afterclose.call();
+                    }, 0);
+                } else {
+                    w.d.wrap.removeClass("show");
+                    w.d.backdrop.remove();
+                    $(".jtsage-datebox-backdrop-div").remove();
+                    basepop.afterclose.call();
+                }
+            }
             $(document).off(w.drag.eMove).off(w.drag.eEnd).off(w.drag.eEndA);
             if (o.useFocus) {
                 w.fastReopen = true;
@@ -679,13 +702,12 @@
         _controlGroup: function(element) {
             var o = this.options;
             if (o.useCollapsedBut) {
-                element.find(".ui-button").css({
-                    marginRight: "0px"
-                }).removeClass("ui-corner-all").first().addClass("ui-corner-left").end().last().addClass("ui-corner-right");
+                element.find("a").css({
+                    width: "auto"
+                });
+                element.addClass("btn-group btn-group-justified");
             } else {
-                element.find(".ui-button").css({
-                    width: "90% "
-                }).removeClass("ui-corner-all").first().addClass("ui-corner-top").end().last().addClass("ui-corner-bottom");
+                element.addClass("btn-group-vertical");
             }
             return element;
         },
