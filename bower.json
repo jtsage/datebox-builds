@@ -1,6 +1,6 @@
 {
-  "name": "jtsage-datebox-i18n",
-  "description": "Plugin to provide a framework agnostic Date and Time Picker (Internationalization Files)",
+  "name": "jtsage-datebox",
+  "description": "Plugin to provide a framework agnostic Date and Time Picker (Bootstrap 3 & 4, jQueryMobile & jQueryUI)",
   "authors": [
     "J.T.Sage <jtsage+datebox@gmail.com>"
   ],
