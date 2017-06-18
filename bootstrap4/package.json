@@ -2,7 +2,7 @@
   "name": "jtsage-datebox-bootstrap4",
   "title": "JTSage DateBox (Bootstrap v4)",
   "description": "Plugin to provide a framework agnostic Date and Time Picker (Bootstrap v4 Version)",
-  "version": "4.1.1",
+  "version": "4.1.2",
   "supports": {
     "bootstrap": "4.0.0"
   },

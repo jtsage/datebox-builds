@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-4.1.1
+ * JTSage-DateBox-4.1.2
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Tue May 23 2017 15:18:16 UTC
+ * Date: Sun Jun 18 2017 14:28:10 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
@@ -16,7 +16,7 @@
     $.widget("jtsage.datebox", {
         initSelector: "input[data-role='datebox']",
         options: {
-            version: "4.1.1",
+            version: "4.1.2",
             jqmVersion: "1.4.5",
             bootstrapVersion: "3.3.7",
             bootstrap4Version: "4.0.0a6",
@@ -174,6 +174,7 @@
             calAlwaysValidateDates: false,
             calYearPickMin: -6,
             calYearPickMax: 6,
+            calYearPickRelative: true,
             calBeforeAppendFunc: function(t) {
                 return t;
             },
@@ -198,7 +199,8 @@
                 m: 24,
                 d: 40,
                 h: 24,
-                i: 30
+                i: 30,
+                s: 30
             },
             slen: {
                 y: 9,
@@ -1643,6 +1645,8 @@
                                     fmtObj.Arr = [ fmtObj.Year, w._zPad(fmtObj.Month + 1), w._zPad(fmtObj.Date) ];
                                     fmtObj.ISO = fmtObj.Arr.join("-");
                                     fmtObj.Comp = fmtObj.Arr.join("");
+                                    fmtObj.curMonth = curDate.get(1);
+                                    fmtObj.curYear = curYear;
                                     fmtObj.dateVisible = w.calDateVisible;
                                     tempVal = o.calFormatter(fmtObj);
                                     if (typeof tempVal !== "object") {
@@ -1813,7 +1817,7 @@
                                 text: w.__("durationLabel")[$.inArray(w.fldOrder[i], defDurOrder)]
                             })).addClass(uid + "datebox-label " + "ui-body-" + o.themeInput).appendTo(currentControl);
                         }
-                        $("<div><input class='form-control' type='text'></div>").addClass(function() {
+                        $("<div><input class='form-control w-100' type='text'></div>").addClass(function() {
                             switch (w.baseMode) {
                               case "jqm":
                                 return "ui-input-text ui-body-" + o.themeInput + " ui-mini";
@@ -2031,6 +2035,10 @@
                             })).appendTo(hRowIn);
                         }
                         hRow.appendTo(ctrl);
+                    }
+                } else {
+                    if (w.fldOrder.length === 4) {
+                        ctrl.addClass(uid + "flipcontentd");
                     }
                 }
                 for (y = 0; y < w.fldOrder.length && !dur; y++) {
@@ -2379,6 +2387,13 @@
                   case "s":
                     if (w._btwn(now.get(5) + amount, -1, 60)) {
                         ok = 5;
+                    } else {
+                        tempBad = now.get(5) + amount;
+                        if (tempBad < 0) {
+                            bad = [ 5, 59 + tempBad ];
+                        } else {
+                            bad = [ 5, tempBad % 60 ];
+                        }
                     }
                     break;
 
@@ -2790,7 +2805,7 @@
             });
         },
         _cal_pickers: function(curMonth, curYear, cTodayDateArr) {
-            var prangeS, prangeL, i, w = this, o = this.options, uid = "ui-datebox-", pickerControl = $("<div>").addClass("ui-datebox-cal-pickers");
+            var prangeS, prangeL, i, w = this, o = this.options, uid = "ui-datebox-", realCurYear = new Date().get(0), pickerControl = $("<div>").addClass("ui-datebox-cal-pickers");
             if (o.calNoHeader && o.calUsePickersIcons) {
                 pickerControl.addClass("ui-datebox-pickicon");
             }
@@ -2801,16 +2816,16 @@
                 pickerControl.a.append($("<option value='" + i + "'" + (curMonth === i ? " selected='selected'" : "") + ">" + w.__("monthsOfYear")[i] + "</option>"));
             }
             if (o.calYearPickMin < 1) {
-                prangeS = curYear + o.calYearPickMin;
+                prangeS = (o.calYearPickRelative ? curYear : realCurYear) + o.calYearPickMin;
             } else if (o.calYearPickMin < 1800) {
-                prangeS = curYear - o.calYearPickMin;
+                prangeS = (o.calYearPickRelative ? curYear : realCurYear) - o.calYearPickMin;
             } else if (o.calYearPickMin === "NOW") {
                 prangeS = cTodayDateArr[0];
             } else {
                 prangeS = o.calYearPickMin;
             }
             if (o.calYearPickMax < 1800) {
-                prangeL = curYear + o.calYearPickMax;
+                prangeL = (o.calYearPickRelative ? curYear : realCurYear) + o.calYearPickMax;
             } else if (o.calYearPickMax === "NOW") {
                 prangeL = cTodayDateArr[0];
             } else {
@@ -3036,7 +3051,11 @@
                     break;
 
                   case "s":
-                    $(this).val(cDur[3]);
+                    if (dur) {
+                        $(this).val(cDur[3]);
+                    } else {
+                        $(this).val(w._zPad(w.theDate.get(5)));
+                    }
                     break;
                 }
             });
@@ -3104,6 +3123,7 @@
                     break;
 
                   case "s":
+                    w.theDate.setD(5, parseInt(item.val(), 10));
                     t += parseInt(item.val(), 10);
                     break;
                 }
@@ -3203,6 +3223,9 @@
             },
             i: function(i) {
                 return this._zPad(this.theDate.copy([ 0, 0, 0, 0, i ]).get(4));
+            },
+            s: function(i) {
+                return this._zPad(this.theDate.copy([ 0, 0, 0, 0, 0, i ]).get(5));
             }
         },
         _sbox_pos: function() {
