@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-4.2.0
+ * JTSage-DateBox-4.2.1
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Sun Jun 18 2017 23:40:41 UTC
+ * Date: Mon Jun 19 2017 20:40:00 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
@@ -16,7 +16,7 @@
     $.widget("jtsage.datebox", {
         initSelector: "input[data-role='datebox']",
         options: {
-            version: "4.1.2",
+            version: "4.2.1",
             jqmVersion: "1.4.5",
             bootstrapVersion: "3.3.7",
             bootstrap4Version: "4.0.0a6",
