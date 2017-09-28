@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-4.2.2
+ * JTSage-DateBox-4.2.3
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Tue Jun 20 2017 22:49:58 UTC
+ * Date: Thu Sep 28 2017 16:47:57 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
@@ -16,16 +16,17 @@
     $.widget("jtsage.datebox", {
         initSelector: "input[data-role='datebox']",
         options: {
-            version: "4.2.2",
+            version: "4.2.3",
             jqmVersion: "1.4.5",
             bootstrapVersion: "3.3.7",
-            bootstrap4Version: "4.0.0a6",
+            bootstrap4Version: "4.0.0b",
             jqmuiWidgetVersion: "1.11.4",
             theme: false,
             themeDefault: "a",
             themeHeader: "a",
             themeSetButton: "a",
             themeCloseButton: "default",
+            extraInputClass: "",
             mode: false,
             transition: "fade",
             useAnimation: true,
@@ -1910,7 +1911,7 @@
                                 text: w.__("durationLabel")[$.inArray(w.fldOrder[i], defDurOrder)]
                             })).addClass(uid + "datebox-label " + "ui-body-" + o.themeInput).appendTo(currentControl);
                         }
-                        $("<div><input class='form-control w-100' type='text'></div>").addClass(function() {
+                        $("<div><input class='form-control w-100 " + o.extraInputClass + "' type='text'></div>").addClass(function() {
                             switch (w.baseMode) {
                               case "jqm":
                                 return "ui-input-text ui-body-" + o.themeInput + " ui-mini";
