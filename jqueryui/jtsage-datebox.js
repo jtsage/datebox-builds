@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-4.3.0
+ * JTSage-DateBox-4.3.1
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Sun Nov 26 2017 22:34:07 UTC
+ * Date: Thu Nov 30 2017 20:05:41 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
@@ -16,7 +16,7 @@
     $.widget("jtsage.datebox", {
         initSelector: "input[data-role='datebox']",
         options: {
-            version: "4.3.0",
+            version: "4.3.1",
             jqmVersion: "1.4.5",
             bootstrapVersion: "3.3.7",
             bootstrap4Version: "4.0.0b2",
@@ -67,6 +67,7 @@
             openCallbackArgs: [],
             closeCallback: false,
             closeCallbackArgs: [],
+            runOnBlurCallback: false,
             startOffsetYears: false,
             startOffsetMonths: false,
             startOffsetDays: false,
@@ -330,7 +331,7 @@
         },
         _create: function() {
             $(document).trigger("dateboxcreate");
-            var w = this, o = $.extend(this.options, this._getLongOptions(this.element), this.element.data("options")), thisTheme = o.theme === false ? "default" : o.theme, d = {
+            var w = this, runTmp, ranTmp, o = $.extend(this.options, this._getLongOptions(this.element), this.element.data("options")), thisTheme = o.theme === false ? "default" : o.theme, d = {
                 input: this.element,
                 wrap: this.element.parent(),
                 mainWrap: $("<div>", {
@@ -424,8 +425,28 @@
             }).on("blur.datebox", function() {
                 w.d.input.removeClass("ui-focus");
             }).on("change.datebox", function() {
-                w.theDate = w._makeDate(w.d.input.val());
-                w.refresh();
+                if (typeof o.runOnBlurCallback === "function") {
+                    runTmp = w._makeDate(w.d.input.val(), true);
+                    ranTmp = o.runOnBlurCallback.apply(w, [ {
+                        oldDate: w.theDate,
+                        newDate: runTmp[0],
+                        wasGoodDate: !runTmp[1],
+                        wasBadDate: runTmp[1]
+                    } ]);
+                    if (typeof ranTmp !== "object") {
+                        w.theDate = w._makeDate(w.d.input.val());
+                        w.refresh();
+                    } else {
+                        if (ranTmp.didSomething === true) {
+                            w.d.input.val(ranTmp.newDate);
+                        }
+                        w.theDate = w._makeDate(w.d.input.val());
+                        w.refresh();
+                    }
+                } else {
+                    w.theDate = w._makeDate(w.d.input.val());
+                    w.refresh();
+                }
             }).on("datebox", w._event);
             if (o.lockInput) {
                 w.d.input.attr("readonly", "readonly");
@@ -1184,8 +1205,8 @@
                 return false;
             }
         },
-        _makeDate: function(str) {
-            var i, exp_temp, exp_format, grbg, w = this, o = this.options, defVal = this.options.defaultValue, adv = w.__fmt(), exp_input = null, exp_names = [], date = new w._date(), d = {
+        _makeDate: function(str, extd) {
+            var i, exp_temp, exp_format, grbg, w = this, o = this.options, defVal = this.options.defaultValue, adv = w.__fmt(), exp_input = null, exp_names = [], faildate = false, date = new w._date(), d = {
                 year: -1,
                 mont: -1,
                 date: -1,
@@ -1198,6 +1219,9 @@
                 yday: false,
                 meri: 0
             };
+            if (typeof extd === "undefined") {
+                extd = false;
+            }
             str = $.trim(w.__("useArabicIndic") === true && typeof str !== "undefined" ? w._dRep(str, -1) : str);
             if (typeof o.mode === "undefined") {
                 return date;
@@ -1299,6 +1323,9 @@
             exp_input = adv.exec(str);
             exp_format = adv.exec(w.__fmt());
             if (exp_input === null || exp_input.length !== exp_format.length) {
+                if (str !== "") {
+                    faildate = true;
+                }
                 if (defVal !== false && defVal !== "") {
                     switch (typeof defVal) {
                       case "object":
@@ -1439,7 +1466,11 @@
                     date.setFullYear(d.year);
                 }
                 if (d.mont > -1 && d.date > -1 || d.hour > -1 && d.mins > -1 && d.secs > -1) {
-                    return date;
+                    if (extd === true) {
+                        return [ date, faildate ];
+                    } else {
+                        return date;
+                    }
                 }
                 if (d.week !== false) {
                     date.setDWeek(d.wtyp, d.week);
@@ -1454,7 +1485,11 @@
                     date.adj(2, d.wday - date.getDay());
                 }
             }
-            return date;
+            if (extd === true) {
+                return [ date, faildate ];
+            } else {
+                return date;
+            }
         },
         _event: function(e, p) {
             var tmp, w = $(this).data("jtsage-datebox"), o = $(this).data("jtsage-datebox").options;
@@ -2623,6 +2658,7 @@
             } else {
                 this.theDate = this._makeDate(newDate);
             }
+            this.calBackDate = false;
             this.refresh();
             this._t({
                 method: "doset"

@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-4.1.1
+ * JTSage-DateBox-4.3.1
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Tue May 9 2017 19:13:43 UTC
+ * Date: Thu Nov 30 2017 20:05:41 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
@@ -93,6 +93,15 @@ jQuery.extend(jQuery.jtsage.datebox.prototype.options.lang, { "sl": {
 		"m",
 		"d"
 	],
+	"datetimeFieldOrder": [
+		"y",
+		"m",
+		"d",
+		"h",
+		"i",
+		"s"
+	],
+	"datetimeFormat": "%Y-%m-%dT%k:%M:%S",
 	"dateFormat": "%-d.%-m.%Y",
 	"useArabicIndic": false,
 	"isRTL": false,
