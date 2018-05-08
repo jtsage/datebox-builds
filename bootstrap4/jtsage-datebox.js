@@ -1,11 +1,11 @@
 /*
- * JTSage-DateBox-4.3.1
+ * JTSage-DateBox-4.4.0
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Thu Nov 30 2017 20:05:41 UTC
+ * Date: Tue May 8 2018 18:58:58 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
- * Copyright 2010, 2017 JTSage. and other contributors
+ * Copyright 2010, 2018 JTSage. and other contributors
  * Released under the MIT license.
  * https://github.com/jtsage/jquery-mobile-datebox/blob/master/LICENSE.txt
  *
@@ -16,10 +16,10 @@
     $.widget("jtsage.datebox", {
         initSelector: "input[data-role='datebox']",
         options: {
-            version: "4.3.1",
+            version: "4.4.0",
             jqmVersion: "1.4.5",
             bootstrapVersion: "3.3.7",
-            bootstrap4Version: "4.0.0b2",
+            bootstrap4Version: "4.0.0",
             jqmuiWidgetVersion: "1.11.4",
             theme: false,
             themeDefault: "a",
@@ -319,7 +319,7 @@
             }
         },
         _destroy: function() {
-            var w = this, o = this.options, button = this.d.wrap.find(".input-group-addon");
+            var w = this, o = this.options, button = this.d.wrap.find(".input-group-append");
             if (o.useButton === true) {
                 button.remove();
                 w.d.input.unwrap();
@@ -395,7 +395,7 @@
                 }
             }
             if (o.useButton) {
-                $("<div class='input-group-addon' " + "style='border-right:1px solid rgba(0,0,0,0.15);border-radius: 0px 4px 4px 0px;'>" + "<span class='" + o.icnCls + o.buttonIcon + "'></span>" + "</div>").attr("title", w.__("tooltip")).on(o.clickEvent, function(e) {
+                $("<div class='input-group-append' " + "style='border-right:1px solid rgba(0,0,0,0.15);border-radius: 0px 4px 4px 0px;'>" + "<div class='input-group-text'>" + "<span class='" + o.icnCls + o.buttonIcon + "'></span>" + "</div></div>").attr("title", w.__("tooltip")).on(o.clickEvent, function(e) {
                     e.preventDefault();
                     if (o.useFocus) {
                         w.d.input.focus();

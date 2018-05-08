@@ -1,11 +1,11 @@
 /*
- * JTSage-DateBox-4.3.1
+ * JTSage-DateBox-4.4.0
  * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Thu Nov 30 2017 20:05:41 UTC
+ * Date: Tue May 8 2018 18:58:58 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
- * Copyright 2010, 2017 JTSage. and other contributors
+ * Copyright 2010, 2018 JTSage. and other contributors
  * Released under the MIT license.
  * https://github.com/jtsage/jquery-mobile-datebox/blob/master/LICENSE.txt
  *
@@ -16,10 +16,10 @@
     $.widget("jtsage.datebox", {
         initSelector: "input[data-role='datebox']",
         options: {
-            version: "4.3.1",
+            version: "4.4.0",
             jqmVersion: "1.4.5",
             bootstrapVersion: "3.3.7",
-            bootstrap4Version: "4.0.0b2",
+            bootstrap4Version: "4.0.0",
             jqmuiWidgetVersion: "1.11.4",
             theme: false,
             themeDefault: "a",
