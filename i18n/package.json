@@ -2,7 +2,7 @@
   "name": "jtsage-datebox-i18n",
   "title": "JTSage DateBox (Internationalization)",
   "description": "Plugin to provide a framework agnostic Date and Time Picker (i18n)",
-  "version": "4.4.0",
+  "version": "4.4.1",
   "supports": {
     "bootstrap": "3.3.7"
   },
