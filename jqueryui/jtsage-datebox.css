@@ -1,6 +1,6 @@
 /*
  * JTSage-DateBox : the full featured Date and Time Picker
- * Date: 2017-05-23T11:18:21-04:00
+ * Date: 2019-02-27T13:10:33-05:00
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
@@ -243,7 +243,7 @@ div.ui-datebox-container.ui-datebox-inline {
 	margin-right: auto;
 	margin-left: auto;
 	position: relative;
-	-webkit-box-shadow: 0 0 12px rgba(0,0,0,.6); */
+	-webkit-box-shadow: 0 0 12px rgba(0,0,0,.6);
     -moz-box-shadow: 0 0 12px rgba(0,0,0,.6);
     box-shadow: 0 0 12px rgba(0,0,0,.6);
 }
@@ -270,6 +270,21 @@ div.ui-datebox-container.ui-datebox-inline {
 }
 .ui-datebox-flipcontentd div {
 	width: 60px;
+}
+.ui-datebox-flipcontente div {
+	width: 48px;
+	margin-left: 2px;
+	margin-right: 2px;
+}
+.ui-datebox-flipcontentf div {
+	width: 40px;
+	margin-left: 1.5px;
+	margin-right: 1.5px;
+}
+.ui-datebox-flipcontentg div {
+	width: 35px;
+	margin-left: 1px;
+	margin-right: 1px;
 }
 .ui-datebox-flipcontent ul {
 	list-style-type: none;

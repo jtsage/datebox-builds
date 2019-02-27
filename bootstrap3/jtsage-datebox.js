@@ -1,11 +1,11 @@
 /*
- * JTSage-DateBox-4.1.1
- * For: {"jqm":"1.4.5","bootstrap":"3.3.7"}
- * Date: Tue May 23 2017 15:18:16 UTC
+ * JTSage-DateBox-4.4.2
+ * For: {"jqm":"1.4.5","bootstrap":"4.2.1"}
+ * Date: Wed Feb 27 2019 18:10:30 UTC
  * http://dev.jtsage.com/DateBox/
  * https://github.com/jtsage/jquery-mobile-datebox
  *
- * Copyright 2010, 2017 JTSage. and other contributors
+ * Copyright 2010, 2019 JTSage. and other contributors
  * Released under the MIT license.
  * https://github.com/jtsage/jquery-mobile-datebox/blob/master/LICENSE.txt
  *
@@ -16,16 +16,17 @@
     $.widget("jtsage.datebox", {
         initSelector: "input[data-role='datebox']",
         options: {
-            version: "4.1.1",
+            version: "4.4.2",
             jqmVersion: "1.4.5",
             bootstrapVersion: "3.3.7",
-            bootstrap4Version: "4.0.0a6",
+            bootstrap4Version: "4.2.1",
             jqmuiWidgetVersion: "1.11.4",
             theme: false,
             themeDefault: "a",
             themeHeader: "a",
             themeSetButton: "a",
             themeCloseButton: "default",
+            extraInputClass: "",
             mode: false,
             transition: "fade",
             useAnimation: true,
@@ -56,7 +57,9 @@
             useSetButton: true,
             useCancelButton: false,
             useTodayButton: false,
+            closeTodayButton: false,
             useTomorrowButton: false,
+            closeTomorrowButton: false,
             useClearButton: false,
             useCollapsedBut: false,
             usePlaceholder: false,
@@ -66,6 +69,7 @@
             openCallbackArgs: [],
             closeCallback: false,
             closeCallbackArgs: [],
+            runOnBlurCallback: false,
             startOffsetYears: false,
             startOffsetMonths: false,
             startOffsetDays: false,
@@ -88,6 +92,7 @@
             minDur: false,
             minuteStep: 1,
             minuteStepRound: 0,
+            twoDigitYearCutoff: 38,
             rolloverMode: {
                 m: true,
                 d: true,
@@ -97,7 +102,7 @@
             },
             useLang: "default",
             lang: {
-                "default": {
+                default: {
                     setDateButtonLabel: "Set Date",
                     setTimeButtonLabel: "Set Time",
                     setDurationButtonLabel: "Set Duration",
@@ -118,8 +123,10 @@
                     prevMonth: "Previous Month",
                     dateFieldOrder: [ "m", "d", "y" ],
                     timeFieldOrder: [ "h", "i", "a" ],
+                    datetimeFieldOrder: [ "y", "m", "d", "h", "i", "s", "a" ],
                     slideFieldOrder: [ "y", "m", "d" ],
                     dateFormat: "%Y-%m-%d",
+                    datetimeFormat: "%Y-%m-%dT%k:%M:%S",
                     useArabicIndic: false,
                     isRTL: false,
                     calStartDay: 0,
@@ -152,6 +159,7 @@
             bootstrapDropdown: true,
             bootstrapDropdownRight: true,
             bootstrapModal: false,
+            bootstrapResponsive: true,
             calNextMonthIcon: "plus",
             calPrevMonthIcon: "minus",
             useInlineAlign: "left",
@@ -179,6 +187,7 @@
             calAlwaysValidateDates: false,
             calYearPickMin: -6,
             calYearPickMax: 6,
+            calYearPickRelative: true,
             calBeforeAppendFunc: function(t) {
                 return t;
             },
@@ -198,12 +207,14 @@
                 i: 1,
                 s: 1
             },
+            flipboxLensAdjust: false,
             flen: {
                 y: 25,
                 m: 24,
                 d: 40,
                 h: 24,
-                i: 30
+                i: 30,
+                s: 30
             },
             slen: {
                 y: 9,
@@ -296,6 +307,11 @@
                     w._t({
                         method: "doset"
                     });
+                    if (o.closeTodayButton === true) {
+                        w._t({
+                            method: "close"
+                        });
+                    }
                 });
             },
             tomorrow: function() {
@@ -307,6 +323,11 @@
                     w._t({
                         method: "doset"
                     });
+                    if (o.closeTomorrowButton === true) {
+                        w._t({
+                            method: "close"
+                        });
+                    }
                 });
             }
         },
@@ -324,18 +345,18 @@
         },
         _create: function() {
             $(document).trigger("dateboxcreate");
-            var w = this, o = $.extend(this.options, this._getLongOptions(this.element), this.element.data("options")), thisTheme = o.theme === false ? "default" : o.theme, d = {
+            var w = this, runTmp, ranTmp, o = $.extend(this.options, this._getLongOptions(this.element), this.element.data("options")), thisTheme = o.theme === false ? "default" : o.theme, d = {
                 input: this.element,
                 wrap: this.element.parent(),
                 mainWrap: $("<div>", {
-                    "class": "ui-datebox-container"
+                    class: "ui-datebox-container"
                 }).css("zIndex", o.zindex),
                 intHTML: false
             }, evtid = ".datebox" + this.uuid, touch = typeof window.ontouchstart !== "undefined", drag = {
                 eStart: "touchstart" + evtid + " mousedown" + evtid,
                 eMove: "touchmove" + evtid + " mousemove" + evtid,
                 eEnd: "touchend" + evtid + " mouseup" + evtid,
-                eEndA: true ? [ "mouseup", "touchend", "touchcanel", "touchmove" ].join(evtid + " ") + evtid : "mouseup" + evtid,
+                eEndA: true ? [ "mouseup", "touchend", "touchcancel", "touchmove" ].join(evtid + " ") + evtid : "mouseup" + evtid,
                 move: false,
                 start: false,
                 end: false,
@@ -408,6 +429,10 @@
             if (o.hideContainer) {
                 w.d.wrap.parent().hide();
             }
+            if (o.hideContainer && !o.useInline) {
+                o.bootstrapModal = true;
+                o.bootstrapResponsive = false;
+            }
             w.d.input.on("focus.datebox", function() {
                 w.d.input.addClass("ui-focus");
                 if (w.disabled === false && o.useFocus) {
@@ -418,8 +443,28 @@
             }).on("blur.datebox", function() {
                 w.d.input.removeClass("ui-focus");
             }).on("change.datebox", function() {
-                w.theDate = w._makeDate(w.d.input.val());
-                w.refresh();
+                if (typeof o.runOnBlurCallback === "function") {
+                    runTmp = w._makeDate(w.d.input.val(), true);
+                    ranTmp = o.runOnBlurCallback.apply(w, [ {
+                        oldDate: w.theDate,
+                        newDate: runTmp[0],
+                        wasGoodDate: !runTmp[1],
+                        wasBadDate: runTmp[1]
+                    } ]);
+                    if (typeof ranTmp !== "object") {
+                        w.theDate = w._makeDate(w.d.input.val());
+                        w.refresh();
+                    } else {
+                        if (ranTmp.didSomething === true) {
+                            w.d.input.val(ranTmp.newDate);
+                        }
+                        w.theDate = w._makeDate(w.d.input.val());
+                        w.refresh();
+                    }
+                } else {
+                    w.theDate = w._makeDate(w.d.input.val());
+                    w.refresh();
+                }
             }).on("datebox", w._event);
             if (o.lockInput) {
                 w.d.input.attr("readonly", "readonly");
@@ -599,8 +644,34 @@
                     return false;
                 }
             }
+            if (o.bootstrapResponsive === true) {
+                if ($(window).width() > 768) {
+                    o.bootstrapModal = false;
+                    o.bootstrapDropdown = true;
+                } else {
+                    o.bootstrapModal = true;
+                    o.bootstrapDropdown = false;
+                }
+            } else {
+                if (o.bootstrapModal === true) {
+                    o.bootstrapDropdown = false;
+                }
+            }
+            if (o.bootstrapDropdown === false && o.bootstrapModal === true) {
+                w.d.mainWrap.css({
+                    width: "100%"
+                });
+                w.d.modalWrap = $('<div id="jtdb-' + this.uuid + '" class="modal fade">' + '<div class="modal-dialog" role="document">' + '<div class="modal-content">' + "</div></div></div>").addClass(o.useAnimation ? o.transition : "");
+                w.d.modalWrap.find(".modal-content").append(w.d.mainWrap);
+                w.d.modalWrap.appendTo($("body")).on("shown.bs.modal", function() {
+                    basepop.afteropen.call();
+                }).modal({
+                    backdrop: "static"
+                });
+                w.d.modalWrap.modal("show");
+            }
             if (o.bootstrapDropdown === true && o.bootstrapModal === false) {
-                w.d.mainWrap.addClass("dropdown-menu").addClass(o.useAnimation ? o.transition : "").addClass(o.bootstrapDropdownRight === true ? "dropdown-menu-right" : "").appendTo(w.d.wrap).on(o.tranDone, function() {
+                w.d.mainWrap.removeAttr("style").addClass("dropdown-menu").addClass(o.useAnimation ? o.transition : "").addClass(o.bootstrapDropdownRight === true ? "dropdown-menu-right" : "").appendTo(w.d.wrap).on(o.tranDone, function() {
                     if (w.d.mainWrap.is(":visible")) {
                         basepop.afteropen.call();
                     } else {
@@ -656,6 +727,13 @@
                 basepop.afterclose = function() {
                     return true;
                 };
+            }
+            if (o.bootstrapDropdown === false && o.bootstrapModal === true) {
+                w.d.modalWrap.on("hidden.bs.modal", function() {
+                    basepop.afterclose.call();
+                    w.d.modalWrap.remove();
+                });
+                w.d.modalWrap.modal("hide");
             }
             if (o.bootstrapDropdown === true && o.bootstrapModal === false) {
                 if (o.useAnimation === true) {
@@ -885,7 +963,7 @@
             });
         },
         _ord: {
-            "default": function(num) {
+            default: function(num) {
                 var ending = num % 10;
                 if (num > 9 && num < 21 || ending > 3) {
                     return "th";
@@ -894,7 +972,7 @@
             }
         },
         _customformat: {
-            "default": function() {
+            default: function() {
                 return false;
             }
         },
@@ -1196,12 +1274,12 @@
             }
         },
         _parser: {
-            "default": function() {
+            default: function() {
                 return false;
             }
         },
-        _makeDate: function(str) {
-            var i, exp_temp, exp_format, grbg, w = this, o = this.options, defVal = this.options.defaultValue, adv = w.__fmt(), exp_input = null, exp_names = [], date = new w._date(), d = {
+        _makeDate: function(str, extd) {
+            var i, exp_temp, exp_format, grbg, w = this, o = this.options, defVal = this.options.defaultValue, adv = w.__fmt(), exp_input = null, exp_names = [], faildate = false, date = new w._date(), d = {
                 year: -1,
                 mont: -1,
                 date: -1,
@@ -1214,6 +1292,9 @@
                 yday: false,
                 meri: 0
             };
+            if (typeof extd === "undefined") {
+                extd = false;
+            }
             str = $.trim(w.__("useArabicIndic") === true && typeof str !== "undefined" ? w._dRep(str, -1) : str);
             if (typeof o.mode === "undefined") {
                 return date;
@@ -1315,6 +1396,9 @@
             exp_input = adv.exec(str);
             exp_format = adv.exec(w.__fmt());
             if (exp_input === null || exp_input.length !== exp_format.length) {
+                if (str !== "") {
+                    faildate = true;
+                }
                 if (defVal !== false && defVal !== "") {
                     switch (typeof defVal) {
                       case "object":
@@ -1364,7 +1448,7 @@
 
                       case "y":
                       case "g":
-                        if (o.afterToday || grbg < 38) {
+                        if (o.afterToday || grbg < o.twoDigitYearCutoff) {
                             d.year = 2e3 + grbg;
                         } else {
                             d.year = 1900 + grbg;
@@ -1455,7 +1539,11 @@
                     date.setFullYear(d.year);
                 }
                 if (d.mont > -1 && d.date > -1 || d.hour > -1 && d.mins > -1 && d.secs > -1) {
-                    return date;
+                    if (extd === true) {
+                        return [ date, faildate ];
+                    } else {
+                        return date;
+                    }
                 }
                 if (d.week !== false) {
                     date.setDWeek(d.wtyp, d.week);
@@ -1470,7 +1558,11 @@
                     date.adj(2, d.wday - date.getDay());
                 }
             }
-            return date;
+            if (extd === true) {
+                return [ date, faildate ];
+            } else {
+                return date;
+            }
         },
         _event: function(e, p) {
             var tmp, w = $(this).data("jtsage-datebox"), o = $(this).data("jtsage-datebox").options;
@@ -1537,7 +1629,7 @@
             }
         },
         _build: {
-            "default": function() {
+            default: function() {
                 this.d.headerText = "Error";
                 if (this.d.intHTML !== false) {
                     this.d.intHTML.remove().empty();
@@ -1611,7 +1703,7 @@
                 if (o.calShowDays) {
                     w._cal_days = w.__("daysOfWeekShort").concat(w.__("daysOfWeekShort"));
                     weekdayControl = $("<div>", {
-                        "class": uid + "gridrow"
+                        class: uid + "gridrow"
                     }).appendTo(calContent);
                     if (o.calControlGroup) {
                         weekdayControl.addClass(uid + "gridrow-last");
@@ -1656,16 +1748,16 @@
                 }
                 for (row = 0, rows = genny.length; row < rows; row++) {
                     htmlRow = $("<div>", {
-                        "class": uid + "gridrow"
+                        class: uid + "gridrow"
                     });
                     if (w.__("isRTL")) {
                         htmlRow.css("direction", "rtl");
                     }
                     if (o.calShowWeek) {
                         $("<div>", {
-                            "class": uid + "griddate " + uid + "griddate-empty"
+                            class: uid + "griddate " + uid + "griddate-empty"
                         }).text("W" + weekNum).addClass(w.baseMode === "bootstrap" ? "pull-left" : "").css(o.calControlGroup ? {
-                            "float": "left"
+                            float: "left"
                         } : {}).appendTo(htmlRow);
                         weekNum++;
                         if (weekNum > 52 && typeof genny[row + 1] !== "undefined") {
@@ -1678,7 +1770,7 @@
                         }
                         if (typeof genny[row][col] === "boolean") {
                             $("<div>", {
-                                "class": uid + "griddate " + uid + "griddate-empty"
+                                class: uid + "griddate " + uid + "griddate-empty"
                             }).appendTo(htmlRow);
                         } else {
                             checked = w._cal_check(checkDates, curDateArr[0], genny[row][col][1], genny[row][col][0], checkDatesObj);
@@ -1686,7 +1778,7 @@
                                 if (!$.isFunction(o.calFormatter)) {
                                     fmtRet = {
                                         text: genny[row][col][0],
-                                        "class": ""
+                                        class: ""
                                     };
                                 } else {
                                     fmtObj = {
@@ -1697,17 +1789,19 @@
                                     fmtObj.Arr = [ fmtObj.Year, w._zPad(fmtObj.Month + 1), w._zPad(fmtObj.Date) ];
                                     fmtObj.ISO = fmtObj.Arr.join("-");
                                     fmtObj.Comp = fmtObj.Arr.join("");
+                                    fmtObj.curMonth = curDate.get(1);
+                                    fmtObj.curYear = curYear;
                                     fmtObj.dateVisible = w.calDateVisible;
                                     tempVal = o.calFormatter(fmtObj);
                                     if (typeof tempVal !== "object") {
                                         fmtRet = {
                                             text: tempVal,
-                                            "class": ""
+                                            class: ""
                                         };
                                     } else {
                                         fmtRet = {
                                             text: tempVal.text,
-                                            "class": tempVal["class"]
+                                            class: tempVal["class"]
                                         };
                                     }
                                 }
@@ -1751,7 +1845,7 @@
                 }
                 if (o.useTodayButton || o.useTomorrowButton || o.useClearButton || o.useCancelButton) {
                     htmlRow = $("<div>", {
-                        "class": uid + "controls"
+                        class: uid + "controls"
                     });
                     if (o.useTodayButton) {
                         htmlRow.append(w._stdBtn.today.apply(w));
@@ -1820,6 +1914,9 @@
             timebox: function() {
                 this._build.datebox.apply(this, []);
             },
+            datetimebox: function() {
+                this._build.datebox.apply(this, []);
+            },
             durationbox: function() {
                 this._build.datebox.apply(this, []);
             },
@@ -1830,7 +1927,23 @@
                 }
                 w.d.headerText = w._grabLabel() !== false ? w._grabLabel() : o.mode === "datebox" ? w.__("titleDateDialogLabel") : w.__("titleTimeDialogLabel");
                 w.d.intHTML = $("<span>");
-                w.fldOrder = o.mode === "datebox" ? w.__("dateFieldOrder") : dur ? w.__("durationOrder") : w.__("timeFieldOrder");
+                switch (o.mode) {
+                  case "durationbox":
+                    w.fldOrder = w.__("durationOrder");
+                    break;
+
+                  case "timebox":
+                    w.fldOrder = w.__("timeFieldOrder");
+                    break;
+
+                  case "datetimebox":
+                    w.fldOrder = w.__("datetimeFieldOrder");
+                    break;
+
+                  case "datebox":
+                    w.fldOrder = w.__("dateFieldOrder");
+                    break;
+                }
                 if (!dur) {
                     w._check();
                     w._minStepFix();
@@ -1839,9 +1952,10 @@
                     w.dateOK = true;
                     w._fixstepper(w.fldOrder);
                 }
-                if (o.mode === "datebox") {
-                    $(w._spf("<div class='{cls}'><h4>{text}</h4></div>", {
-                        cls: uid + "header",
+                if (o.mode === "datebox" || o.mode === "datetimebox") {
+                    tmp = w.baseMode === "bootstrap4" ? "h6" : "h4";
+                    $(w._spf("<div class='{cls}'><" + tmp + ">{text}</" + tmp + "></div>", {
+                        cls: uid + "header text-center",
                         text: w._formatter(w.__("headerFormat"), w.theDate)
                     })).appendTo(w.d.intHTML);
                 }
@@ -1849,7 +1963,7 @@
                 for (i = 0; i < w.fldOrder.length; i++) {
                     currentControl = $("<div>").addClass(uid + "datebox-group");
                     if (w.baseMode === "jqm") {
-                        currentControl.addClass("ui-block-" + [ "a", "b", "c", "d", "e" ][cnt]);
+                        currentControl.addClass("ui-block-" + [ "a", "b", "c", "d", "e", "f", "g" ][cnt]);
                     }
                     if (dur) {
                         offAmount = o.durationSteppers[w.fldOrder[i]];
@@ -1867,7 +1981,7 @@
                                 text: w.__("durationLabel")[$.inArray(w.fldOrder[i], defDurOrder)]
                             })).addClass(uid + "datebox-label " + "ui-body-" + o.themeInput).appendTo(currentControl);
                         }
-                        $("<div><input class='form-control' type='text'></div>").addClass(function() {
+                        $("<div><input class='form-control w-100 " + o.extraInputClass + "' type='text'></div>").addClass(function() {
                             switch (w.baseMode) {
                               case "jqm":
                                 return "ui-input-text ui-body-" + o.themeInput + " ui-mini";
@@ -1882,6 +1996,10 @@
                         }).appendTo(currentControl).find("input").data({
                             field: w.fldOrder[i],
                             amount: offAmount
+                        }).addClass(function() {
+                            if (w.baseMode === "bootstrap4" && w.fldOrder.length > 4) {
+                                return "px-0";
+                            }
                         });
                         w._dbox_button(-1, w.fldOrder[i], offAmount).appendTo(currentControl);
                         currentControl.appendTo(allControls);
@@ -1890,21 +2008,40 @@
                 }
                 switch (w.baseMode) {
                   case "jqm":
-                    allControls.addClass("ui-grid-" + [ 0, 0, "a", "b", "c", "d", "e" ][cnt]);
+                    allControls.addClass("ui-grid-" + [ 0, 0, "a", "b", "c", "d", "e", "f", "g" ][cnt]);
+                    if (cnt > 4) {
+                        allControls.find("input").each(function() {
+                            $(this).css({
+                                "padding-left": 0,
+                                "padding-right": 0
+                            });
+                        });
+                    }
                     break;
 
                   case "bootstrap":
-                    allControls.addClass("row");
+                    tmp = Math.floor(100 / cnt) + "%";
                     allControls.find("." + uid + "datebox-group").each(function() {
-                        $(this).addClass("col-xs-" + 12 / cnt);
+                        $(this).css({
+                            "padding-left": 0,
+                            "padding-right": 0,
+                            display: "inline-block",
+                            width: tmp
+                        });
                     });
+                    if (cnt > 4) {
+                        allControls.find("input").each(function() {
+                            $(this).css({
+                                "padding-left": 0,
+                                "padding-right": 0
+                            });
+                        });
+                    }
                     break;
 
                   case "bootstrap4":
-                    allControls.addClass("row");
-                    allControls.find("." + uid + "datebox-group").each(function() {
-                        $(this).addClass("px-0 col-sm-" + 12 / cnt);
-                    });
+                    allControls.addClass("d-flex flex-row");
+                    allControls.find("." + uid + "datebox-group");
                     break;
 
                   case "jqueryui":
@@ -1918,10 +2055,24 @@
                 w._dbox_run_update(true);
                 if (o.useSetButton || o.useClearButton || o.useCancelButton || o.useTodayButton || o.useTomorrowButton) {
                     controlButtons = $("<div>", {
-                        "class": uid + "controls"
+                        class: uid + "controls"
                     });
                     if (o.useSetButton) {
-                        w.setBut = w._stdBtn.close.apply(w, [ o.mode === "datebox" ? w.__("setDateButtonLabel") : dur ? w.__("setDurationButtonLabel") : w.__("setTimeButtonLabel") ]);
+                        switch (o.mode) {
+                          case "timebox":
+                            tmp = w.__("setTimeButtonLabel");
+                            break;
+
+                          case "durationbox":
+                            tmp = w.__("setDurationButtonLabel");
+                            break;
+
+                          case "datebox":
+                          case "datetimebox":
+                            tmp = w.__("setDateButtonLabel");
+                            break;
+                        }
+                        w.setBut = w._stdBtn.close.apply(w, [ tmp ]);
                         w.setBut.appendTo(controlButtons);
                     }
                     if (o.useTodayButton) {
@@ -1999,13 +2150,29 @@
             timeflipbox: function() {
                 this._build.flipbox.apply(this);
             },
+            datetimeflipbox: function() {
+                this._build.flipbox.apply(this);
+            },
             durationflipbox: function() {
                 this._build.flipbox.apply(this);
             },
             flipbox: function() {
-                var i, y, hRow, tmp, hRowIn, stdPos, controlButtons, w = this, o = this.options, g = this.drag, cDurS = {}, normDurPositions = [ "d", "h", "i", "s" ], dur = o.mode === "durationflipbox" ? true : false, uid = "ui-datebox-", flipBase = $("<div class='ui-overlay-shadow'><ul></ul></div>"), ctrl = $("<div>", {
-                    "class": uid + "flipcontent"
-                }), ti = w.theDate.getTime() - w.initDate.getTime(), themeType = "" + (w.baseMode === "jqm" ? "ui-body-" : "") + (w.baseMode === "bootstrap" || w.baseMode === "bootstrap4" ? "bg-" : ""), cDur = w._dur(ti < 0 ? 0 : ti), currentTerm, currentText;
+                var i, y, hRow, tmp, hRowIn, stdPos, controlButtons, w = this, o = this.options, g = this.drag, cDurS = {}, normDurPositions = [ "d", "h", "i", "s" ], dur = o.mode === "durationflipbox" ? true : false, uid = "ui-datebox-", uidfc = uid + "flipcontent", flipBase = $("<div class='ui-overlay-shadow'><ul></ul></div>"), ctrl = $("<div>", {
+                    class: uid + "flipcontent"
+                }), ti = w.theDate.getTime() - w.initDate.getTime(), themeType = "", cDur = w._dur(ti < 0 ? 0 : ti), currentTerm, currentText;
+                switch (w.baseMode) {
+                  case "jqm":
+                    themeType = "ui-body-";
+                    break;
+
+                  case "bootstrap":
+                    themeType = "bg-";
+                    break;
+
+                  case "bootstrap4":
+                    themeType = "p-0 m-0 btn btn-block btn-outline-";
+                    break;
+                }
                 if (ti < 0) {
                     w.lastDuration = 0;
                     if (dur) {
@@ -2030,7 +2197,26 @@
                 $(document).one("popupafteropen", function() {
                     w._fbox_pos();
                 });
-                w.fldOrder = o.mode === "flipbox" ? w.__("dateFieldOrder") : dur ? w.__("durationOrder") : w.__("timeFieldOrder");
+                switch (o.mode) {
+                  case "durationflipbox":
+                    w.fldOrder = w.__("durationOrder");
+                    break;
+
+                  case "timeflipbox":
+                    w.fldOrder = w.__("timeFieldOrder");
+                    break;
+
+                  case "datetimeflipbox":
+                    w.fldOrder = w.__("datetimeFieldOrder");
+                    break;
+
+                  case "flipbox":
+                    w.fldOrder = w.__("dateFieldOrder");
+                    break;
+                }
+                if (w.baseMode === "bootstrap4" && w.fldOrder.length > 6) {
+                    themeType = "btn-sm " + themeType;
+                }
                 if (!dur) {
                     w._check();
                     w._minStepFix();
@@ -2046,9 +2232,10 @@
                         cDur = w._dur(o.maxDur * 1e3);
                     }
                 }
-                if (o.mode === "flipbox") {
-                    $(w._spf("<div class='{cls}'><h4>{text}</h4></div>", {
-                        cls: uid + "header",
+                if (o.mode === "flipbox" || o.mode === "datetimeflipbox") {
+                    tmp = w.baseMode === "bootstrap4" ? "h6" : "h4";
+                    $(w._spf("<div class='{cls}'><" + tmp + ">{text}</" + tmp + "></div>", {
+                        cls: uid + "header text-center",
                         text: w._formatter(w.__("headerFormat"), w.theDate)
                     })).appendTo(w.d.intHTML);
                 }
@@ -2064,12 +2251,12 @@
                         })).appendTo(tmp);
                     }
                     tmp.appendTo(w.d.intHTML);
+                    ctrl.addClass(uidfc + "d");
                     w.dateOK = true;
                     cDurS.d = w._fbox_series(cDur[0], 64, "d", false);
                     cDurS.h = w._fbox_series(cDur[1], 64, "h", cDur[0] > 0);
                     cDurS.i = w._fbox_series(cDur[2], 60, "i", cDur[0] > 0 || cDur[1] > 0);
                     cDurS.s = w._fbox_series(cDur[3], 60, "s", cDur[0] > 0 || cDur[1] > 0 || cDur[2] > 0);
-                    ctrl.addClass(uid + "flipcontentd");
                     for (y = 0; y < w.fldOrder.length; y++) {
                         stdPos = w.fldOrder[y];
                         currentTerm = cDur[$.inArray(stdPos, normDurPositions)];
@@ -2085,6 +2272,24 @@
                             })).appendTo(hRowIn);
                         }
                         hRow.appendTo(ctrl);
+                    }
+                } else {
+                    switch (w.fldOrder.length) {
+                      case 4:
+                        ctrl.addClass(uidfc + "d");
+                        break;
+
+                      case 5:
+                        ctrl.addClass(uidfc + "e");
+                        break;
+
+                      case 6:
+                        ctrl.addClass(uidfc + "f");
+                        break;
+
+                      case 7:
+                        ctrl.addClass(uidfc + "g");
+                        break;
                     }
                 }
                 for (y = 0; y < w.fldOrder.length && !dur; y++) {
@@ -2104,7 +2309,7 @@
                         hRow.appendTo(ctrl);
                     }
                     if (currentTerm === "a" && w.__("timeFormat") === 12) {
-                        currentText = $("<li class='" + themeType + o.themeDate + "'><span></span></li>");
+                        currentText = $("<li class='" + themeType + o.themeDate + "'><span>&nbsp;</span></li>");
                         tmp = w.theDate.get(3) > 11 ? [ o.themeDate, o.themeDatePick, 2, 5 ] : [ o.themeDatePick, o.themeDate, 2, 3 ];
                         for (i = -1 * tmp[2]; i < tmp[3]; i++) {
                             if (i < 0 || i > 1) {
@@ -2121,14 +2326,28 @@
                 }
                 w.d.intHTML.append(ctrl);
                 $("<div>", {
-                    "class": uid + "flipcenter ui-overlay-shadow"
+                    class: uid + "flipcenter ui-overlay-shadow"
                 }).css("pointerEvents", "none").appendTo(w.d.intHTML);
                 if (o.useSetButton || o.useClearButton || o.useCancelButton || o.useTodayButton || o.useTomorrowButton) {
                     controlButtons = $("<div>", {
-                        "class": uid + "controls"
+                        class: uid + "controls"
                     });
                     if (o.useSetButton) {
-                        controlButtons.append(w._stdBtn.close.apply(w, [ o.mode === "flipbox" ? w.__("setDateButtonLabel") : dur ? w.__("setDurationButtonLabel") : w.__("setTimeButtonLabel") ]));
+                        switch (o.mode) {
+                          case "timeflipbox":
+                            tmp = w.__("setTimeButtonLabel");
+                            break;
+
+                          case "durationflipbox":
+                            tmp = w.__("setDurationButtonLabel");
+                            break;
+
+                          case "flipbox":
+                          case "datetimeflipbox":
+                            tmp = w.__("setDateButtonLabel");
+                            break;
+                        }
+                        controlButtons.append(w._stdBtn.close.apply(w, [ tmp ]));
                     }
                     if (o.useTodayButton) {
                         controlButtons.append(w._stdBtn.today.apply(w));
@@ -2169,8 +2388,8 @@
                 });
             },
             slidebox: function() {
-                var i, y, hRow, phRow, currentTerm, currentText, w = this, o = this.options, g = this.drag, uid = "ui-datebox-", slideBase = $("<div class='" + uid + "sliderow-int'></div>"), phBase = $("<div>"), ctrl = $("<div>", {
-                    "class": uid + "slide"
+                var i, y, hRow, phRow, currentTerm, currentText, tmp, w = this, o = this.options, g = this.drag, uid = "ui-datebox-", slideBase = $("<div class='" + uid + "sliderow-int'></div>"), phBase = $("<div>"), ctrl = $("<div>", {
+                    class: uid + "slide"
                 });
                 if (typeof w.d.intHTML !== "boolean") {
                     w.d.intHTML.remove().empty();
@@ -2186,7 +2405,8 @@
                 w.fldOrder = w.__("slideFieldOrder");
                 w._check();
                 w._minStepFix();
-                $("<div class='" + uid + "header'><h4>" + w._formatter(w.__("headerFormat"), w.theDate) + "</h4></div>").appendTo(w.d.intHTML);
+                tmp = w.baseMode === "bootstrap4" ? "h6" : "h4";
+                $("<div class='" + uid + "header text-center'><" + tmp + ">" + w._formatter(w.__("headerFormat"), w.theDate) + "</" + tmp + "></div>").appendTo(w.d.intHTML);
                 w.d.intHTML.append(ctrl);
                 for (y = 0; y < w.fldOrder.length; y++) {
                     currentTerm = w.fldOrder[y];
@@ -2199,7 +2419,7 @@
                         for (i = o.slen[currentTerm] * -1; i < o.slen[currentTerm] + 1; i++) {
                             currentText = w._sbox_mktxt[currentTerm].apply(w, [ i ]);
                             $("<div>", {
-                                "class": uid + "slidebox " + uid + currentText[0] + o.btnCls + (i === 0 ? o.themeDatePick : o.themeDate)
+                                class: uid + "slidebox " + uid + currentText[0] + o.btnCls + (i === 0 ? o.themeDatePick : o.themeDate)
                             }).html(currentText[1]).data("offset", i).appendTo(hRow);
                         }
                         if (w.baseMode === "bootstrap") {
@@ -2210,7 +2430,7 @@
                 }
                 if (o.useSetButton || o.useClearButton || o.useCancelButton || o.useTodayButton || o.useTomorrowButton) {
                     y = $("<div>", {
-                        "class": uid + "controls " + uid + "repad"
+                        class: uid + "controls " + uid + "repad"
                     });
                     if (o.useSetButton) {
                         y.append(w._stdBtn.close.apply(w, [ w.__("setDateButtonLabel") ]));
@@ -2255,10 +2475,13 @@
             }
         },
         _drag: {
-            "default": function() {
+            default: function() {
                 return false;
             },
             timeflipbox: function() {
+                this._drag.flipbox.apply(this);
+            },
+            datetimeflipbox: function() {
                 this._drag.flipbox.apply(this);
             },
             durationflipbox: function() {
@@ -2269,7 +2492,7 @@
                 $(document).on(g.eMove, function(e) {
                     if (g.move && o.mode.slice(-7) === "flipbox") {
                         g.end = e.type.substr(0, 5) === "touch" ? e.originalEvent.changedTouches[0].pageY : e.pageY;
-                        g.target.css("marginTop", g.pos + g.end - g.start + "px");
+                        g.target.attr("style", "margin-top: " + (g.pos + g.end - g.start) + "px !important");
                         g.elapsed = Date.now() - g.time;
                         g.velocity = .8 * (100 * (g.end - g.start) / (1 + g.elapsed)) + .2 * g.velocity;
                         e.preventDefault();
@@ -2433,6 +2656,13 @@
                   case "s":
                     if (w._btwn(now.get(5) + amount, -1, 60)) {
                         ok = 5;
+                    } else {
+                        tempBad = now.get(5) + amount;
+                        if (tempBad < 0) {
+                            bad = [ 5, 59 + tempBad ];
+                        } else {
+                            bad = [ 5, tempBad % 60 ];
+                        }
                     }
                     break;
 
@@ -2501,6 +2731,7 @@
             } else {
                 this.theDate = this._makeDate(newDate);
             }
+            this.calBackDate = false;
             this.refresh();
             this._t({
                 method: "doset"
@@ -2547,13 +2778,13 @@
                 fromEl = w.d.input.attr("min").split("-");
                 fromElDate = new w._date(fromEl[0], fromEl[1] - 1, fromEl[2], 0, 0, 0, 0);
                 daysRaw = (fromElDate.getTime() - todayClean.getTime()) / lod;
-                o.minDays = parseInt(daysRaw * -1, 10);
+                o.minDays = Math.round(daysRaw * -1, 10);
             }
             if ((override === true || o.maxDays === false) && typeof w.d.input.attr("max") !== "undefined") {
                 fromEl = w.d.input.attr("max").split("-");
                 fromElDate = new w._date(fromEl[0], fromEl[1] - 1, fromEl[2], 0, 0, 0, 0);
                 daysRaw = (fromElDate.getTime() - todayClean.getTime()) / lod;
-                o.maxDays = parseInt(daysRaw, 10);
+                o.maxDays = Math.round(daysRaw, 10);
             }
             if (refresh === true) {
                 w._t({
@@ -2601,6 +2832,10 @@
               case "durationbox":
               case "durationflipbox":
                 return w.__("durationFormat");
+
+              case "datetimebox":
+              case "datetimeflipbox":
+                return w.__("datetimeFormat");
 
               default:
                 return w.__("dateFormat");
@@ -2779,7 +3014,7 @@
         _cal_prev_next: function(container) {
             var w = this, o = this.options, uid = "ui-datebox-";
             $(w._spf("<div class='{class}'><a href='#'>{name}</a></div>", {
-                "class": uid + "gridplus" + (w.__("isRTL") ? "-rtl" : ""),
+                class: uid + "gridplus" + (w.__("isRTL") ? "-rtl" : ""),
                 name: w._spf(o.s.cal.nextMonth, {
                     text: w.__("nextMonth"),
                     icon: o.calNextMonthIcon
@@ -2790,8 +3025,10 @@
                     return o.btnCls + o.themeDate + o.icnCls + o.calNextMonthIcon;
 
                   case "bootstrap":
-                  case "bootstrap4":
                     return o.btnCls + o.themeDate + " pull-" + (w.__("isRTL") ? "left" : "right");
+
+                  case "bootstrap4":
+                    return o.btnCls + o.themeDate + " float-" + (w.__("isRTL") ? "left" : "right");
 
                   default:
                     return null;
@@ -2811,7 +3048,7 @@
                 return false;
             });
             $(w._spf("<div class='{class}'><a href='#'>{name}</a></div>", {
-                "class": uid + "gridminus" + (w.__("isRTL") ? "-rtl" : ""),
+                class: uid + "gridminus" + (w.__("isRTL") ? "-rtl" : ""),
                 name: w._spf(o.s.cal.prevMonth, {
                     text: w.__("prevMonth"),
                     icon: o.calPrevMonthIcon
@@ -2822,8 +3059,10 @@
                     return o.btnCls + o.themeDate + o.icnCls + o.calPrevMonthIcon;
 
                   case "bootstrap":
-                  case "bootstrap4":
                     return o.btnCls + o.themeDate + " pull-" + (w.__("isRTL") ? "right" : "left");
+
+                  case "bootstrap4":
+                    return o.btnCls + o.themeDate + " float-" + (w.__("isRTL") ? "right" : "left");
 
                   default:
                     return null;
@@ -2844,7 +3083,7 @@
             });
         },
         _cal_pickers: function(curMonth, curYear, cTodayDateArr) {
-            var prangeS, prangeL, i, w = this, o = this.options, uid = "ui-datebox-", pickerControl = $("<div>").addClass("ui-datebox-cal-pickers");
+            var prangeS, prangeL, i, w = this, o = this.options, uid = "ui-datebox-", realCurYear = new Date().get(0), pickerControl = $("<div>").addClass("ui-datebox-cal-pickers");
             if (o.calNoHeader && o.calUsePickersIcons) {
                 pickerControl.addClass("ui-datebox-pickicon");
             }
@@ -2855,16 +3094,16 @@
                 pickerControl.a.append($("<option value='" + i + "'" + (curMonth === i ? " selected='selected'" : "") + ">" + w.__("monthsOfYear")[i] + "</option>"));
             }
             if (o.calYearPickMin < 1) {
-                prangeS = curYear + o.calYearPickMin;
+                prangeS = (o.calYearPickRelative ? curYear : realCurYear) + o.calYearPickMin;
             } else if (o.calYearPickMin < 1800) {
-                prangeS = curYear - o.calYearPickMin;
+                prangeS = (o.calYearPickRelative ? curYear : realCurYear) - o.calYearPickMin;
             } else if (o.calYearPickMin === "NOW") {
                 prangeS = cTodayDateArr[0];
             } else {
                 prangeS = o.calYearPickMin;
             }
             if (o.calYearPickMax < 1800) {
-                prangeL = curYear + o.calYearPickMax;
+                prangeL = (o.calYearPickRelative ? curYear : realCurYear) + o.calYearPickMax;
             } else if (o.calYearPickMax === "NOW") {
                 prangeL = cTodayDateArr[0];
             } else {
@@ -2916,7 +3155,7 @@
               case "jqueryui":
                 pickerControl.i.find("select").addClass("form-control input-sm").css({
                     marginTop: "3px",
-                    "float": "left"
+                    float: "left"
                 }).first().css({
                     width: "60%"
                 }).end().last().css({
@@ -2932,13 +3171,14 @@
               case "bootstrap4":
                 pickerControl.i.find("select").addClass("form-control form-control-sm input-sm").css({
                     marginTop: "3px",
-                    "float": "left",
+                    float: "left",
                     height: "auto"
                 }).first().css({
                     width: "60%"
                 }).end().last().css({
                     width: "40%"
                 });
+                pickerControl.i.addClass("w-100");
                 if (o.calNoHeader && o.calUsePickersIcons) {
                     w.d.intHTML.find("." + uid + "gridheader").append(pickerControl);
                 } else {
@@ -3090,7 +3330,11 @@
                     break;
 
                   case "s":
-                    $(this).val(cDur[3]);
+                    if (dur) {
+                        $(this).val(cDur[3]);
+                    } else {
+                        $(this).val(w._zPad(w.theDate.get(5)));
+                    }
                     break;
                 }
             });
@@ -3158,6 +3402,7 @@
                     break;
 
                   case "s":
+                    w.theDate.setD(5, parseInt(item.val(), 10));
                     t += parseInt(item.val(), 10);
                     break;
                 }
@@ -3175,7 +3420,6 @@
                 switch (w.baseMode) {
                   case "jqm":
                   case "bootstrap":
-                  case "bootstrap4":
                     return o.icnCls + (direction > 0 ? o.calNextMonthIcon : o.calPrevMonthIcon);
 
                   default:
@@ -3187,6 +3431,7 @@
             }).append(function() {
                 switch (w.baseMode) {
                   case "jqueryui":
+                  case "bootstrap4":
                     return $("<span>").addClass(o.icnCls + (direction > 0 ? o.calNextMonthIcon : o.calPrevMonthIcon));
 
                   default:
@@ -3195,7 +3440,7 @@
             });
         },
         _fbox_pos: function() {
-            var fixer, element, first, placement = 0, w = this, adj = w.baseMode === "bootstrap4" ? 5 : 0, parentHeight = this.d.intHTML.find(".ui-datebox-flipcontent").innerHeight();
+            var fixer, element, first, placement = 0, tmp, w = this, o = this.options, adj = o.flipboxLensAdjust === false ? w.baseMode === "bootstrap4" ? 5 : 0 : o.flipboxLensAdjust, parentHeight = this.d.intHTML.find(".ui-datebox-flipcontent").innerHeight();
             w.d.intHTML.find(".ui-datebox-flipcenter").each(function() {
                 element = $(this);
                 placement = (parentHeight / 2 - element.innerHeight() / 2 - 3) * -1 + adj;
@@ -3206,7 +3451,8 @@
                 parentHeight = element.parent().innerHeight();
                 first = element.find("li").first();
                 fixer = element.find("li").last().offset().top - element.find("li").first().offset().top;
-                first.css("marginTop", ((fixer - parentHeight) / 2 + first.outerHeight()) * -1);
+                tmp = ((fixer - parentHeight) / 2 + first.outerHeight()) * -1;
+                first.attr("style", "margin-top: " + tmp + "px !important");
             });
         },
         _fbox_series: function(middle, side, type, neg) {
@@ -3257,23 +3503,22 @@
             },
             i: function(i) {
                 return this._zPad(this.theDate.copy([ 0, 0, 0, 0, i ]).get(4));
+            },
+            s: function(i) {
+                return this._zPad(this.theDate.copy([ 0, 0, 0, 0, 0, i ]).get(5));
             }
         },
         _sbox_pos: function() {
-            var fixer, ech, top, par, tot, w = this;
+            var ech, top, par, tot, w = this;
             w.d.intHTML.find("div.ui-datebox-sliderow-int").each(function() {
                 ech = $(this);
                 par = ech.parent().outerWidth();
-                fixer = ech.outerWidth();
                 if (w.__("isRTL")) {
                     top = ech.find("div").last();
                 } else {
                     top = ech.find("div").first();
                 }
                 tot = ech.find("div").length * top.outerWidth();
-                if (fixer > 0) {
-                    tot = fixer;
-                }
                 top.css("marginLeft", (tot - par) / 2 * -1);
             });
         },
