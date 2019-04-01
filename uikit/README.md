@@ -3,7 +3,7 @@ JTSage-DateBox
 
 DateBox is a jQuery date and time picker. [Full Documentation and Demos](http://datebox.jtsage.dev/), that works with a multitude of CSS frameworks.
 
-This folder contains the Bootstrap v3 version.
+This folder contains the UIKit version.
 
 DateBox Features
 ----------------

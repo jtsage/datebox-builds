@@ -1,5 +1,5 @@
 /*
- * JTSage-DateBox-5.0.0 (jqm)
+ * JTSage-DateBox-5.0.0 (fomanticui)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2"}
  * Date: 2019-04-01T22:07:56.594Z
  * http://datebox.jtsage.dev/
@@ -12,7 +12,285 @@
  */
 
 
-
+(function(factory) {
+    if (typeof define === "function" && define.amd) {
+        define([ "jquery" ], factory);
+    } else {
+        factory(jQuery);
+    }
+})(function($) {
+    if (typeof $.widget !== "undefined") {
+        return false;
+    }
+    var widgetUuid = 0, widgetSlice = Array.prototype.slice;
+    $.widget = function(name, base, prototype) {
+        var existingConstructor, constructor, basePrototype;
+        var proxiedPrototype = {};
+        var namespace = name.split(".")[0];
+        name = name.split(".")[1];
+        var fullName = namespace + "-" + name;
+        if (!prototype) {
+            prototype = base;
+            base = $.Widget;
+        }
+        if ($.isArray(prototype)) {
+            prototype = $.extend.apply(null, [ {} ].concat(prototype));
+        }
+        $.expr[":"][fullName.toLowerCase()] = function(elem) {
+            return !!$.data(elem, fullName);
+        };
+        $[namespace] = $[namespace] || {};
+        existingConstructor = $[namespace][name];
+        constructor = $[namespace][name] = function(options, element) {
+            if (!this._createWidget) {
+                return new constructor(options, element);
+            }
+            if (arguments.length) {
+                this._createWidget(options, element);
+            }
+        };
+        $.extend(constructor, existingConstructor, {
+            version: prototype.version,
+            _proto: $.extend({}, prototype),
+            _childConstructors: []
+        });
+        basePrototype = new base();
+        basePrototype.options = $.widget.extend({}, basePrototype.options);
+        $.each(prototype, function(prop, value) {
+            if (typeof value !== "function") {
+                proxiedPrototype[prop] = value;
+                return;
+            }
+            proxiedPrototype[prop] = function() {
+                function _super() {
+                    return base.prototype[prop].apply(this, arguments);
+                }
+                function _superApply(args) {
+                    return base.prototype[prop].apply(this, args);
+                }
+                return function() {
+                    var __super = this._super;
+                    var __superApply = this._superApply;
+                    var returnValue;
+                    this._super = _super;
+                    this._superApply = _superApply;
+                    returnValue = value.apply(this, arguments);
+                    this._super = __super;
+                    this._superApply = __superApply;
+                    return returnValue;
+                };
+            }();
+        });
+        constructor.prototype = $.widget.extend(basePrototype, {
+            widgetEventPrefix: existingConstructor ? basePrototype.widgetEventPrefix || name : name
+        }, proxiedPrototype, {
+            constructor: constructor,
+            namespace: namespace,
+            widgetName: name,
+            widgetFullName: fullName
+        });
+        if (existingConstructor) {
+            $.each(existingConstructor._childConstructors, function(i, child) {
+                var childPrototype = child.prototype;
+                $.widget(childPrototype.namespace + "." + childPrototype.widgetName, constructor, child._proto);
+            });
+            delete existingConstructor._childConstructors;
+        } else {
+            base._childConstructors.push(constructor);
+        }
+        $.widget.bridge(name, constructor);
+        return constructor;
+    };
+    $.widget.extend = function(target) {
+        var input = widgetSlice.call(arguments, 1);
+        var inputIndex = 0;
+        var inputLength = input.length;
+        var key;
+        var value;
+        for (;inputIndex < inputLength; inputIndex++) {
+            for (key in input[inputIndex]) {
+                value = input[inputIndex][key];
+                if (input[inputIndex].hasOwnProperty(key) && value !== undefined) {
+                    if ($.isPlainObject(value)) {
+                        target[key] = $.isPlainObject(target[key]) ? $.widget.extend({}, target[key], value) : $.widget.extend({}, value);
+                    } else {
+                        target[key] = value;
+                    }
+                }
+            }
+        }
+        return target;
+    };
+    $.widget.bridge = function(name, object) {
+        var fullName = object.prototype.widgetFullName || name;
+        $.fn[name] = function(options) {
+            var isMethodCall = typeof options === "string";
+            var args = widgetSlice.call(arguments, 1);
+            var returnValue = this;
+            if (isMethodCall) {
+                if (!this.length && options === "instance") {
+                    returnValue = undefined;
+                } else {
+                    this.each(function() {
+                        var methodValue;
+                        var instance = $.data(this, fullName);
+                        if (options === "instance") {
+                            returnValue = instance;
+                            return false;
+                        }
+                        if (!instance) {
+                            return false;
+                        }
+                        if (typeof instance[options] !== "function" || options.charAt(0) === "_") {
+                            return false;
+                        }
+                        methodValue = instance[options].apply(instance, args);
+                        if (methodValue !== instance && methodValue !== undefined) {
+                            returnValue = methodValue && methodValue.jquery ? returnValue.pushStack(methodValue.get()) : methodValue;
+                            return false;
+                        }
+                    });
+                }
+            } else {
+                if (args.length) {
+                    options = $.widget.extend.apply(null, [ options ].concat(args));
+                }
+                this.each(function() {
+                    var instance = $.data(this, fullName);
+                    if (instance) {
+                        instance.option(options || {});
+                        if (instance._init) {
+                            instance._init();
+                        }
+                    } else {
+                        $.data(this, fullName, new object(options, this));
+                    }
+                });
+            }
+            return returnValue;
+        };
+    };
+    $.Widget = function() {};
+    $.Widget._childConstructors = [];
+    $.Widget.prototype = {
+        widgetName: "widget",
+        widgetEventPrefix: "",
+        defaultElement: "<div>",
+        options: {
+            classes: {},
+            disabled: false,
+            create: null
+        },
+        _createWidget: function(options, element) {
+            element = $(element || this.defaultElement || this)[0];
+            this.element = $(element);
+            this.uuid = widgetUuid++;
+            this.eventNamespace = "." + this.widgetName + this.uuid;
+            this.bindings = $();
+            this.hoverable = $();
+            this.focusable = $();
+            this.classesElementLookup = {};
+            if (element !== this) {
+                $.data(element, this.widgetFullName, this);
+                this.document = $(element.style ? element.ownerDocument : element.document || element);
+                this.window = $(this.document[0].defaultView || this.document[0].parentWindow);
+            }
+            this.options = $.widget.extend({}, this.options, this._getCreateOptions(), options);
+            this._create();
+            this._trigger("create", null, this._getCreateEventData());
+            this._init();
+        },
+        _getCreateOptions: function() {
+            return {};
+        },
+        _getCreateEventData: $.noop,
+        _create: $.noop,
+        _init: $.noop,
+        destroy: function() {
+            this._destroy();
+            this.element.off(this.eventNamespace).removeData(this.widgetFullName);
+            this.widget().off(this.eventNamespace).removeAttr("aria-disabled");
+            this.bindings.off(this.eventNamespace);
+        },
+        _destroy: $.noop,
+        widget: function() {
+            return this.element;
+        },
+        option: function(key, value) {
+            var options = key;
+            var parts;
+            var curOption;
+            var i;
+            if (arguments.length === 0) {
+                return $.widget.extend({}, this.options);
+            }
+            if (typeof key === "string") {
+                options = {};
+                parts = key.split(".");
+                key = parts.shift();
+                if (parts.length) {
+                    curOption = options[key] = $.widget.extend({}, this.options[key]);
+                    for (i = 0; i < parts.length - 1; i++) {
+                        curOption[parts[i]] = curOption[parts[i]] || {};
+                        curOption = curOption[parts[i]];
+                    }
+                    key = parts.pop();
+                    if (arguments.length === 1) {
+                        return curOption[key] === undefined ? null : curOption[key];
+                    }
+                    curOption[key] = value;
+                } else {
+                    if (arguments.length === 1) {
+                        return this.options[key] === undefined ? null : this.options[key];
+                    }
+                    options[key] = value;
+                }
+            }
+            this._setOptions(options);
+            return this;
+        },
+        _setOptions: function(options) {
+            var key;
+            for (key in options) {
+                this._setOption(key, options[key]);
+            }
+            return this;
+        },
+        _setOption: function(key, value) {
+            this.options[key] = value;
+            return this;
+        },
+        enable: function() {
+            return this._setOptions({
+                disabled: false
+            });
+        },
+        disable: function() {
+            return this._setOptions({
+                disabled: true
+            });
+        },
+        _trigger: function(type, event, data) {
+            var prop, orig;
+            var callback = this.options[type];
+            data = data || {};
+            event = $.Event(event);
+            event.type = (type === this.widgetEventPrefix ? type : this.widgetEventPrefix + type).toLowerCase();
+            event.target = this.element[0];
+            orig = event.originalEvent;
+            if (orig) {
+                for (prop in orig) {
+                    if (!(prop in event)) {
+                        event[prop] = orig[prop];
+                    }
+                }
+            }
+            this.element.trigger(event, data);
+            return !(typeof callback === "function" && callback.apply(this.element[0], [ event ].concat(data)) === false || event.isDefaultPrevented());
+        }
+    };
+    var widget = $.widget;
+});
 
 (function($) {
     $.widget("jtsage.datebox", {
@@ -23,10 +301,10 @@
             lockInput: true,
             safeEdit: true,
             controlWidth: "290px",
-            controlWidthImp: "",
+            controlWidthImp: " !important",
             breakpointWidth: "567px",
             zindex: "1100",
-            clickEvent: "vclick",
+            clickEvent: "click",
             useKinetic: true,
             flipSizeOverride: false,
             defaultValue: false,
@@ -132,49 +410,49 @@
                     calHeaderFormat: "%B %Y"
                 }
             },
-            theme_clearBtn: [ "recycle", "a" ],
-            theme_closeBtn: [ "check", "a" ],
-            theme_cancelBtn: [ "delete", "a" ],
-            theme_tomorrowBtn: [ "action", "a" ],
-            theme_todayBtn: [ "action", "a" ],
-            theme_dropdownContainer: "ui-body-a",
-            theme_modalContainer: "ui-body-a",
-            theme_inlineContainer: "ui-body-a",
-            theme_headerTheme: "inherit",
-            theme_headerBtn: [ "delete", "a" ],
-            theme_openButton: false,
-            theme_cal_Today: "b",
-            theme_cal_DayHigh: "b",
-            theme_cal_Selected: "active",
-            theme_cal_DateHigh: "b",
-            theme_cal_DateHighAlt: "b",
-            theme_cal_DateHighRec: "b",
-            theme_cal_Default: "a",
-            theme_cal_OutOfBounds: "a",
-            theme_cal_NextBtn: [ "plus", "a" ],
-            theme_cal_PrevBtn: [ "minus", "a" ],
-            theme_cal_Pickers: "a",
-            theme_cal_DateList: "a",
-            theme_dbox_NextBtn: [ "plus", "a" ],
-            theme_dbox_PrevBtn: [ "minus", "a" ],
-            theme_dbox_Inputs: "inherit",
-            theme_fbox_Selected: "a ui-flipswitch-active",
-            theme_fbox_Default: "a",
-            theme_fbox_Forbidden: "a ui-disabled",
+            theme_clearBtn: [ "clear", "yellow" ],
+            theme_closeBtn: [ "check", "positive" ],
+            theme_cancelBtn: [ "cancel", "negative" ],
+            theme_tomorrowBtn: [ "goto", "grey" ],
+            theme_todayBtn: [ "goto", "grey" ],
+            theme_dropdownContainer: "ui card form",
+            theme_modalContainer: "ui card form",
+            theme_inlineContainer: "ui card form",
+            theme_headerTheme: "inverted borderless",
+            theme_headerBtn: [ "cancel", false ],
+            theme_openButton: "basic",
+            theme_cal_Today: "primary",
+            theme_cal_DayHigh: "yellow",
+            theme_cal_Selected: "positive",
+            theme_cal_DateHigh: "red",
+            theme_cal_DateHighAlt: "orange",
+            theme_cal_DateHighRec: "olive",
+            theme_cal_Default: "basic secondary",
+            theme_cal_OutOfBounds: "grey tertiary",
+            theme_cal_NextBtn: [ "next", false ],
+            theme_cal_PrevBtn: [ "prev", false ],
+            theme_cal_Pickers: false,
+            theme_cal_DateList: false,
+            theme_dbox_NextBtn: [ "plus", "primary" ],
+            theme_dbox_PrevBtn: [ "minus", "primary" ],
+            theme_dbox_Inputs: false,
+            theme_fbox_Selected: "green",
+            theme_fbox_Default: "basic",
+            theme_fbox_Forbidden: "red",
             theme_fbox_RollHeight: "135px",
-            theme_slide_Today: "b",
-            theme_slide_DayHigh: "b",
-            theme_slide_Selected: "active",
-            theme_slide_DateHigh: "b",
-            theme_slide_DateHighAlt: "b",
-            theme_slide_DateHighRec: "b",
-            theme_slide_Default: "a",
-            theme_slide_NextBtn: [ "plus", "a" ],
-            theme_slide_PrevBtn: [ "minus", "a" ],
-            theme_slide_NextDateBtn: [ "carat-r", "a" ],
-            theme_slide_PrevDateBtn: [ "carat-l", "a" ],
-            theme_slide_Pickers: "a",
-            theme_slide_DateList: "a",
+            theme_slide_Today: "primary",
+            theme_slide_DayHigh: "yellow",
+            theme_slide_Selected: "positive",
+            theme_slide_DateHigh: "red",
+            theme_slide_DateHighAlt: "orange",
+            theme_slide_DateHighRec: "olive",
+            theme_slide_Default: "basic secondary",
+            theme_slide_NextBtn: [ "plus", false ],
+            theme_slide_PrevBtn: [ "minus", false ],
+            theme_slide_NextDateBtn: [ "next", "tertiary secondary" ],
+            theme_slide_PrevDateBtn: [ "prev", "tertiary secondary" ],
+            theme_slide_Pickers: false,
+            theme_slide_DateList: false,
             theme_backgroundMask: {
                 position: "fixed",
                 left: 0,
@@ -183,11 +461,11 @@
                 bottom: 0,
                 backgroundColor: "rgba(0,0,0,.4)"
             },
-            theme_headStyle: " .center { text-align: center !important; } .p0 { padding: 0 !important; }.m0 { margin: 0 !important; } .w-100 { width: 100% !important; }",
+            theme_headStyle: false,
             theme_spanStyle: false,
             buttonIconDate: "calendar",
             buttonIconTime: "clock",
-            disabledState: "ui-disabled",
+            disabledState: "disabled",
             tranDone: "webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend",
             calHighToday: true,
             calHighPick: true,
@@ -293,17 +571,9 @@
                 return hardAttachPoint;
             }
             if (!isInline) {
-                possibleAttach = $(".ui-page-active");
-                if (possibleAttach.length === 1) {
-                    return possibleAttach;
-                }
-                possibleAttach = w.d.input.closest("[data-role='page']");
-                if (possibleAttach.length === 1) {
-                    return possibleAttach;
-                }
                 return $("body");
             }
-            if (possibleAttach.hasClass("ui-field-contain")) {
+            if (possibleAttach.hasClass("field")) {
                 return possibleAttach;
             } else {
                 return w.d.wrap;
@@ -312,172 +582,154 @@
         style_btn: function(theme, contents) {
             var retty;
             contents = typeof contents === "undefined" ? "" : contents;
-            retty = "<a href='#' role='button' class='ui-btn ui-mini ui-btn-" + theme[1] + "";
-            retty += theme[0] !== false ? " ui-icon-" + theme[0] : "";
-            retty += contents === "" ? " ui-corner-all ui-btn-icon-notext" : " ui-btn-icon-left";
-            retty += "'>" + contents + "</a>";
+            retty = "<a href='#' role='button' class='ui button fluid " + theme[1] + "'>";
+            retty += theme[0] !== false ? "<span>" + this.icons.getIcon(theme[0]) + "</span> " : "";
+            retty += contents + "</a>";
             return retty;
         },
-        style_btnGrp: function(collapse) {
-            var style = collapse ? "margin: 0 auto;" : "margin: 0 .446em";
-            return $("<div style='" + style + "' class='ui-controlgroup-controls'>");
-        },
-        style_btnGrpOut: function(collapse, inner) {
-            var cls = collapse === true ? "ui-controlgroup-horizontal" : "ui-controlgroup-vertical", style = collapse === true ? "style='text-align:center'" : "";
-            inner.find(".ui-btn").last().addClass("ui-last-child");
-            inner.find(".ui-btn").first().addClass("ui-first-child");
-            return $("<div " + style + " class='ui-controlgroup " + cls + "'>").append(inner);
+        style_btnGrp: function() {
+            return $("<div style='padding:.3em'>");
         },
         style_inWrap: function(originalInput) {
-            return originalInput.parent().addClass("ui-input-has-clear");
+            return originalInput.wrap("<div class='ui right action input'>").parent();
         },
-        style_inBtn: function(icon, title) {
-            return "<a href='javascript: return false;' " + "class='dbOpenButton ui-input-clear ui-btn ui-icon-" + icon + " ui-btn-icon-notext ui-corner-all' " + "title='" + title + "'>" + title + "</a>";
+        style_inBtn: function(icon, title, theme) {
+            return "<div class='ui button " + theme + " dbOpenButton' title='" + title + "'>" + this.icons.getIcon(icon) + "</div>";
         },
-        style_inNoBtn: function(originalInputWrap) {
-            originalInputWrap.parent().removeClass("ui-has-clear");
+        style_inNoBtn: function() {
+            return true;
         },
         style_inHide: function() {
             var w = this, hideMe = w.d.wrap.parent();
-            if (hideMe.hasClass("ui-field-contain")) {
+            if (hideMe.hasClass("field")) {
                 hideMe.hide();
             } else {
                 w.d.wrap.hide();
             }
         },
         style_mainHead: function(text, themeBar, themeButton) {
-            return "<div class='ui-header ui-bar-" + themeBar + "'>" + "<h1 class='ui-title'>" + text + "</h5>" + this.style_btn([ themeButton[0], themeButton[1] + " dbCloser ui-btn-right" ]) + "</div>";
+            return "<div class='ui menu " + themeBar + "'>" + "<div class='item'>" + text + "</div>" + "<div class='right menu'>" + "<a class='item dbCloser' href='#'>" + this.icons.getIcon(themeButton[0]) + "</a>" + "</div></div>";
         },
         style_subHead: function(text) {
-            return $("<div class='dbHeader'>" + "<h3 class='center'>" + text + "</h3>" + "</div>");
+            return $("<div style='text-align:center' class='dbHeader'><h3>" + text + "</h3></div>");
         },
         style_pnHead: function(txt, prevBtn, nextBtn, prevCtl, nextCtl) {
-            var returnVal = $("<div class='ui-header' style='border:0; padding: 0 3px 8px;'>");
-            $(this.style_btn([ prevBtn[0], prevBtn[1] + " ui-btn-left " + prevCtl ])).appendTo(returnVal);
-            $("<h1 class='ui-title' style='margin: 0 15%'>" + txt + "</h1>").appendTo(returnVal);
-            $(this.style_btn([ nextBtn[0], nextBtn[1] + " ui-btn-right " + nextCtl ])).appendTo(returnVal);
+            var returnVal = $("<div class='ui three item menu secondary'>");
+            $(this.style_btn([ prevBtn[0], prevBtn[1] + " item " + prevCtl ])).appendTo(returnVal);
+            $("<div class='item'>" + txt + "</div>").appendTo(returnVal);
+            $(this.style_btn([ nextBtn[0], nextBtn[1] + " item " + nextCtl ])).appendTo(returnVal);
             return returnVal;
         },
         style_picker: function(ranges, theme, monthCtl, yearCtl) {
-            var i = 0, returnVal = "<div style='padding-bottom: 8px' class='" + "ui-controlgroup ui-controlgroup-horizontal ui-corner-all ui-mini'>";
-            returnVal += "<div class='ui-controlgroup-controls w-100'>";
-            returnVal += "<div class='ui-select' style='width:60%'>";
-            returnVal += "<div id='" + monthCtl + "-button' class='ui-btn-" + theme + " ui-btn ui-icon-carat-d ui-btn-icon-right ui-corner-all ui-shadow ui-first-child'>";
-            for (i = 0; i < ranges.month.length; i++) {
-                if (ranges.month[i][2] === true) {
-                    returnVal += "<span>" + ranges.month[i][1] + "</span>";
-                }
-            }
-            returnVal += this._stdSel(ranges.month, monthCtl, "");
-            returnVal += "</div></div>";
-            returnVal += "<div class='ui-select' style='width:40%'>";
-            returnVal += "<div id='" + yearCtl + "-button' class='ui-btn-" + theme + " ui-btn ui-icon-carat-d ui-btn-icon-right ui-corner-all ui-shadow ui-last-child'>";
-            for (i = 0; i < ranges.year.length; i++) {
-                if (ranges.year[i][2] === true) {
-                    returnVal += "<span>" + ranges.year[i][1] + "</span>";
-                }
-            }
-            returnVal += this._stdSel(ranges.year, yearCtl, "");
-            returnVal += "</div></div>";
+            var returnVal = "";
+            returnVal += "<div class='ui grid celled'><div class='row'>";
+            returnVal += "<div class='nine wide column'>";
+            returnVal += this._stdSel(ranges.month, monthCtl, "form-control");
+            returnVal += "</div>";
+            returnVal += "<div class='seven wide column'>";
+            returnVal += this._stdSel(ranges.year, yearCtl, "form-control");
+            returnVal += "</div>";
             returnVal += "</div></div>";
             return $(returnVal);
         },
         style_dateList: function(listLabel, list, theme, ctlCls) {
             var returnVal = "", newList = list.slice();
             newList.unshift([ false, listLabel, true ]);
-            returnVal += "<div class='ui-select'>";
-            returnVal += "<div id='" + ctlCls + "-button' style='margin: 0 .446em 8px;' class='" + "ui-mini ui-btn ui-icon-carat-d ui-btn-" + theme + " ui-btn-icon-right ui-corner-all'>";
-            returnVal += "<span>" + listLabel + "</span>";
-            returnVal += this._stdSel(newList, ctlCls, "");
-            returnVal += "</div></div>";
+            returnVal += "<div class='ui grid celled'><div class='row'>";
+            returnVal += "<div class='sixteen wide column'>";
+            returnVal += this._stdSel(newList, ctlCls, "form-control");
+            returnVal += "</div></div></div>";
             return $(returnVal);
         },
         style_calGrid: function() {
-            return $("<div><table class='dbCalGrid w-100'></table></div>");
+            return $("<div><table style='width:100%' class='dbCalGrid'></table></div>");
         },
         style_calRow: function() {
             return $("<tr>");
         },
         style_calBtn: function(data, totalElements) {
-            var styles_TD = "width:" + 100 / totalElements + "%", styles_A = [ "padding-right:0", "padding-left:0" ], class_A = [ "dbEvent", "ui-btn", "ui-mini", "m0", "ui-btn-" + data.theme, data.bad ? "ui-disabled" : "" ], disable = data.bad ? "disabled='disabled'" : "";
-            return $("<td class='p0 m0' style='" + styles_TD + "'>" + "<a style='" + styles_A.join(";") + "' class='" + class_A.join(" ") + "' href='#' " + disable + ">" + data.displayText + "</a></td>");
+            var styles_TD = [ "width : " + 100 / totalElements + "%" ], styles_A = [ "margin: 0", "padding-right: 0", "padding-left: 0" ], class_A = [ "dbEvent", "ui", "button", "tiny", "fluid", data.theme, data.bad ? " disabled" : "" ], disable = data.bad ? "disabled='disabled'" : "";
+            return $("<td style='" + styles_TD.join(";") + "'>" + "<a href='#' style='" + styles_A.join(";") + "' class='" + class_A.join(" ") + "' " + disable + ">" + data.displayText + "</a>" + "</td>");
         },
         style_calTxt: function(text, header, totalElements) {
-            var styles = [ "width:" + 100 / totalElements + "%", header ? "font-weight:bold" : "" ];
-            return $("<td class='p0 m0 center' style='" + styles.join(";") + "'>" + text + "</td>");
+            var styles_TD = "width : " + 100 / totalElements + "%; " + "text-align : center; " + (header ? "font-weight: bold" : "");
+            return $("<td style='" + styles_TD + "'>" + text + "</td>");
         },
         style_dboxCtr: function() {
-            return $("<table class='w-100'>");
+            return $("<div>");
         },
         style_dboxRow: function() {
-            return $("<tr>");
+            return $("<div style='margin: .3em .3em' class='ui equal width grid'>");
         },
-        style_dboxCtrl: function(prevBtn, nextBtn, mainCls, label, inTheme) {
+        style_dboxCtrl: function(prevBtn, nextBtn, mainCls, label) {
             var returnVal = "";
-            returnVal += "<td class='dbBox" + mainCls + "'>";
-            returnVal += "<a href='#' role='button' class='ui-corner-all ui-btn ui-mini ui-btn-";
-            returnVal += nextBtn[1] + " ui-icon-" + nextBtn[0] + " ui-btn-icon-top dbBoxNext m0' ";
-            returnVal += "style='padding-top:2.1em; border-bottom-left-radius:0;" + "border-bottom-right-radius:0;'>";
-            returnVal += "</a>";
+            returnVal += "<div style='margin:0;padding:0;' class='column dbBox" + mainCls + "'>";
+            returnVal += this.style_btn([ nextBtn[0], nextBtn[1] + " top attached dbBoxNext" ]);
             if (label !== null) {
-                returnVal += "<div class='m0 center ui-input-text ui-body-inherit' " + "style='height:auto; padding: .3em 0;'>" + label + "</div>";
+                returnVal += "<div class='ui fluid label' " + "style='border-radius:0; text-align:center; margin:0'>" + label + "</div>";
             }
-            returnVal += "<div class='m0 ui-input-text ui-mini ui-body-" + inTheme + "'>";
-            returnVal += "<input class='p0 center' type='text'></div>";
-            returnVal += "<a href='#' role='button' class='ui-corner-all ui-btn ui-mini ui-btn-";
-            returnVal += prevBtn[1] + " ui-icon-" + prevBtn[0] + " ui-btn-icon-top dbBoxPrev m0' ";
-            returnVal += "style='padding-top:2.1em; border-top-left-radius:0;" + "border-top-right-radius:0;'>";
-            returnVal += "</a>";
+            returnVal += "<input type='text' ";
+            returnVal += "style='border-radius:0;text-align:center;padding-right:0;padding-left:0;'>";
+            returnVal += this.style_btn([ prevBtn[0], prevBtn[1] + " bottom attached dbBoxNext" ]);
             returnVal += "</div>";
-            return $(returnVal);
+            returnVal = $(returnVal);
+            returnVal.find(".dbBoxNext,.dbBoxPrev").css({
+                "padding-right": 0,
+                "padding-left": 0
+            });
+            return returnVal;
         },
         style_slideGrid: function() {
-            return $("<div><table class='dbSlideGrid w-100'></table></div>");
+            return $("<div><table class='dbSlideGrid' style='width:100%'></table></div>");
         },
         style_slideRow: function() {
             return $("<tr>");
         },
         style_slideBtn: function(data) {
-            var style = " style='width: " + 100 / 8 + "%'", disable = data.bad ? "disabled='disabled'" : "", cls = "class='m0 dbEventS w-100 ui-btn ui-mini ui-btn-" + data.theme + (data.bad ? " disabled" : "") + "'";
-            return $("<td class='m-0 p-0 text-center'" + style + ">" + "<a style='padding:.7em 0;' href='#' " + cls + " " + disable + ">" + "<small>" + this.__("daysOfWeekShort")[data.dateObj.getDay()] + "</small><br>" + data.dateObj.getDate() + "</a>" + "</td>");
+            var styles_TD = "width: " + 100 / 8 + "%", styles_A = [ "padding-left: 0", "padding-right: 0" ], class_A = [ "dbEventS", "ui", "button", "fluid", "tiny", data.theme, data.bad ? "disabled" : "" ], disable = data.bad ? "disabled='disabled'" : "";
+            return $("<td style='" + styles_TD + "'>" + "<a href='#' style='" + styles_A.join(";") + "' class='" + class_A.join(" ") + "' " + disable + ">" + "<small>" + this.__("daysOfWeekShort")[data.dateObj.getDay()] + "</small>" + "<br>" + data.dateObj.getDate() + "</a></td>");
         },
         style_slideCtrl: function(eventCls, theme) {
-            var style = " style='width: " + 100 / 8 / 2 + "%'", cls = "class='m0 ui-corner-all ui-btn ui-mini ui-btn-icon-notext ui-btn-" + theme[1] + " " + eventCls + " ui-icon-" + theme[0] + "'";
-            return $("<td " + style + ">" + "<a href='#' " + cls + "></a></td>");
+            var styles_TD = "width: " + 100 / 8 / 2 + "%", styles_A = [ "padding-left: 0", "padding-right: 0" ], class_A = [ "ui", "fluid", "button", "mini", "button", theme[1], eventCls ];
+            return $("<td style='" + styles_TD + "'>" + "<a href='#' style='" + styles_A.join(";") + "'class='" + class_A.join(" ") + "'>" + this.icons.getIcon(theme[0]) + "</a></td>");
         },
         style_fboxCtr: function(size) {
-            return $("<div style='margin: 0 5px 8px; height: " + size + "; overflow: hidden'>");
+            return $("<div style='height: " + size + "; overflow: hidden; margin: .3em .3em 0'>");
         },
         style_fboxDurLbls: function() {
-            return $("<div style='margin: 5px;'>");
+            return $("<div style='margin: .3em;'>");
         },
         style_fboxDurLbl: function(text, items) {
-            return $("<div class='center' " + "style='display:inline-block; width: " + 100 / items + "%'>" + text + "</div>");
+            return $("<div style='text-align: center; display:inline-block; width: " + 100 / items + "%'>" + text + "</div>");
         },
         style_fboxRollCtr: function(total) {
             return $("<div style='float:left; width:" + 100 / total + "%'>");
         },
         style_fboxRollPrt: function() {
-            return $("<ul style='list-style-type: none; display: inline;'>");
+            return $("<ul style='margin:0; padding:0; list-style-type: none; display:inline;'>");
         },
         style_fboxRollCld: function(text, cls) {
-            return $("<li style='height: 30px; line-height: 30px;' class='center ui-body-" + cls + "'>" + text + "</li>");
+            var styles = [ "margin-left:0", "margin-right:0", "padding-left:0", "padding-right:0", "text-align:center", "display:block" ];
+            return $("<li class='ui label fluid large " + cls + "' " + "style='" + styles.join(";") + "'>" + text + "</li>");
         },
         style_fboxLens: function() {
-            return $("<div style='width: 96%; height: 40px; border: 1px solid #eee; margin: 0 1.5%;' " + "class='ui-overlay-shadow'>");
+            return $("<div class='label big ui fluid basic primary' style='" + "box-shadow: rgba(0, 0, 0, 0.15) 0px 0.5rem 1rem; margin: 0; display:block;" + "background-color: transparent;'>&nbsp;</div>");
         },
         style_fboxPos: function() {
-            var fullRoller, firstItem, height_Roller, intended_Top, w = this, o = this.options, height_Outside = w.d.intHTML.find(".dbRollerV").outerHeight(), theLens = w.d.intHTML.find(".dbLens").first(), height_Lens = theLens.outerHeight();
+            var fullRoller, firstItem, height_Roller, intended_Top, w = this, o = this.options, height_Outside = w.d.intHTML.find(".dbRollerV").outerHeight(), theLens = w.d.intHTML.find(".dbLens").first(), height_Lens = theLens.outerHeight(true), single = w.d.intHTML.find(".dbRoller").first().children().first();
+            if (single.height() < 5) {
+                return true;
+            }
             intended_Top = -1 * (height_Outside / 2 + height_Lens / 2);
             theLens.css({
-                top: intended_Top + -3,
+                top: intended_Top + 7,
                 marginBottom: -1 * height_Lens
             });
             w.d.intHTML.find(".dbRoller").each(function() {
                 fullRoller = $(this);
                 firstItem = fullRoller.children().first();
                 if (firstItem.css("marginTop") === "0px") {
-                    height_Roller = (fullRoller.children().length + 1) * firstItem.outerHeight();
+                    height_Roller = (fullRoller.children().length - .5) * firstItem.outerHeight();
                     intended_Top = -1 * (height_Roller / 2) + height_Outside / 2;
                     if (o.flipboxLensAdjust !== false) {
                         intended_Top += o.flipboxLensAdjust;

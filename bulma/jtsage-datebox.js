@@ -1,5 +1,5 @@
 /*
- * JTSage-DateBox-5.0.0 (jqm)
+ * JTSage-DateBox-5.0.0 (bulma)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2"}
  * Date: 2019-04-01T22:07:56.594Z
  * http://datebox.jtsage.dev/
@@ -12,7 +12,285 @@
  */
 
 
-
+(function(factory) {
+    if (typeof define === "function" && define.amd) {
+        define([ "jquery" ], factory);
+    } else {
+        factory(jQuery);
+    }
+})(function($) {
+    if (typeof $.widget !== "undefined") {
+        return false;
+    }
+    var widgetUuid = 0, widgetSlice = Array.prototype.slice;
+    $.widget = function(name, base, prototype) {
+        var existingConstructor, constructor, basePrototype;
+        var proxiedPrototype = {};
+        var namespace = name.split(".")[0];
+        name = name.split(".")[1];
+        var fullName = namespace + "-" + name;
+        if (!prototype) {
+            prototype = base;
+            base = $.Widget;
+        }
+        if ($.isArray(prototype)) {
+            prototype = $.extend.apply(null, [ {} ].concat(prototype));
+        }
+        $.expr[":"][fullName.toLowerCase()] = function(elem) {
+            return !!$.data(elem, fullName);
+        };
+        $[namespace] = $[namespace] || {};
+        existingConstructor = $[namespace][name];
+        constructor = $[namespace][name] = function(options, element) {
+            if (!this._createWidget) {
+                return new constructor(options, element);
+            }
+            if (arguments.length) {
+                this._createWidget(options, element);
+            }
+        };
+        $.extend(constructor, existingConstructor, {
+            version: prototype.version,
+            _proto: $.extend({}, prototype),
+            _childConstructors: []
+        });
+        basePrototype = new base();
+        basePrototype.options = $.widget.extend({}, basePrototype.options);
+        $.each(prototype, function(prop, value) {
+            if (typeof value !== "function") {
+                proxiedPrototype[prop] = value;
+                return;
+            }
+            proxiedPrototype[prop] = function() {
+                function _super() {
+                    return base.prototype[prop].apply(this, arguments);
+                }
+                function _superApply(args) {
+                    return base.prototype[prop].apply(this, args);
+                }
+                return function() {
+                    var __super = this._super;
+                    var __superApply = this._superApply;
+                    var returnValue;
+                    this._super = _super;
+                    this._superApply = _superApply;
+                    returnValue = value.apply(this, arguments);
+                    this._super = __super;
+                    this._superApply = __superApply;
+                    return returnValue;
+                };
+            }();
+        });
+        constructor.prototype = $.widget.extend(basePrototype, {
+            widgetEventPrefix: existingConstructor ? basePrototype.widgetEventPrefix || name : name
+        }, proxiedPrototype, {
+            constructor: constructor,
+            namespace: namespace,
+            widgetName: name,
+            widgetFullName: fullName
+        });
+        if (existingConstructor) {
+            $.each(existingConstructor._childConstructors, function(i, child) {
+                var childPrototype = child.prototype;
+                $.widget(childPrototype.namespace + "." + childPrototype.widgetName, constructor, child._proto);
+            });
+            delete existingConstructor._childConstructors;
+        } else {
+            base._childConstructors.push(constructor);
+        }
+        $.widget.bridge(name, constructor);
+        return constructor;
+    };
+    $.widget.extend = function(target) {
+        var input = widgetSlice.call(arguments, 1);
+        var inputIndex = 0;
+        var inputLength = input.length;
+        var key;
+        var value;
+        for (;inputIndex < inputLength; inputIndex++) {
+            for (key in input[inputIndex]) {
+                value = input[inputIndex][key];
+                if (input[inputIndex].hasOwnProperty(key) && value !== undefined) {
+                    if ($.isPlainObject(value)) {
+                        target[key] = $.isPlainObject(target[key]) ? $.widget.extend({}, target[key], value) : $.widget.extend({}, value);
+                    } else {
+                        target[key] = value;
+                    }
+                }
+            }
+        }
+        return target;
+    };
+    $.widget.bridge = function(name, object) {
+        var fullName = object.prototype.widgetFullName || name;
+        $.fn[name] = function(options) {
+            var isMethodCall = typeof options === "string";
+            var args = widgetSlice.call(arguments, 1);
+            var returnValue = this;
+            if (isMethodCall) {
+                if (!this.length && options === "instance") {
+                    returnValue = undefined;
+                } else {
+                    this.each(function() {
+                        var methodValue;
+                        var instance = $.data(this, fullName);
+                        if (options === "instance") {
+                            returnValue = instance;
+                            return false;
+                        }
+                        if (!instance) {
+                            return false;
+                        }
+                        if (typeof instance[options] !== "function" || options.charAt(0) === "_") {
+                            return false;
+                        }
+                        methodValue = instance[options].apply(instance, args);
+                        if (methodValue !== instance && methodValue !== undefined) {
+                            returnValue = methodValue && methodValue.jquery ? returnValue.pushStack(methodValue.get()) : methodValue;
+                            return false;
+                        }
+                    });
+                }
+            } else {
+                if (args.length) {
+                    options = $.widget.extend.apply(null, [ options ].concat(args));
+                }
+                this.each(function() {
+                    var instance = $.data(this, fullName);
+                    if (instance) {
+                        instance.option(options || {});
+                        if (instance._init) {
+                            instance._init();
+                        }
+                    } else {
+                        $.data(this, fullName, new object(options, this));
+                    }
+                });
+            }
+            return returnValue;
+        };
+    };
+    $.Widget = function() {};
+    $.Widget._childConstructors = [];
+    $.Widget.prototype = {
+        widgetName: "widget",
+        widgetEventPrefix: "",
+        defaultElement: "<div>",
+        options: {
+            classes: {},
+            disabled: false,
+            create: null
+        },
+        _createWidget: function(options, element) {
+            element = $(element || this.defaultElement || this)[0];
+            this.element = $(element);
+            this.uuid = widgetUuid++;
+            this.eventNamespace = "." + this.widgetName + this.uuid;
+            this.bindings = $();
+            this.hoverable = $();
+            this.focusable = $();
+            this.classesElementLookup = {};
+            if (element !== this) {
+                $.data(element, this.widgetFullName, this);
+                this.document = $(element.style ? element.ownerDocument : element.document || element);
+                this.window = $(this.document[0].defaultView || this.document[0].parentWindow);
+            }
+            this.options = $.widget.extend({}, this.options, this._getCreateOptions(), options);
+            this._create();
+            this._trigger("create", null, this._getCreateEventData());
+            this._init();
+        },
+        _getCreateOptions: function() {
+            return {};
+        },
+        _getCreateEventData: $.noop,
+        _create: $.noop,
+        _init: $.noop,
+        destroy: function() {
+            this._destroy();
+            this.element.off(this.eventNamespace).removeData(this.widgetFullName);
+            this.widget().off(this.eventNamespace).removeAttr("aria-disabled");
+            this.bindings.off(this.eventNamespace);
+        },
+        _destroy: $.noop,
+        widget: function() {
+            return this.element;
+        },
+        option: function(key, value) {
+            var options = key;
+            var parts;
+            var curOption;
+            var i;
+            if (arguments.length === 0) {
+                return $.widget.extend({}, this.options);
+            }
+            if (typeof key === "string") {
+                options = {};
+                parts = key.split(".");
+                key = parts.shift();
+                if (parts.length) {
+                    curOption = options[key] = $.widget.extend({}, this.options[key]);
+                    for (i = 0; i < parts.length - 1; i++) {
+                        curOption[parts[i]] = curOption[parts[i]] || {};
+                        curOption = curOption[parts[i]];
+                    }
+                    key = parts.pop();
+                    if (arguments.length === 1) {
+                        return curOption[key] === undefined ? null : curOption[key];
+                    }
+                    curOption[key] = value;
+                } else {
+                    if (arguments.length === 1) {
+                        return this.options[key] === undefined ? null : this.options[key];
+                    }
+                    options[key] = value;
+                }
+            }
+            this._setOptions(options);
+            return this;
+        },
+        _setOptions: function(options) {
+            var key;
+            for (key in options) {
+                this._setOption(key, options[key]);
+            }
+            return this;
+        },
+        _setOption: function(key, value) {
+            this.options[key] = value;
+            return this;
+        },
+        enable: function() {
+            return this._setOptions({
+                disabled: false
+            });
+        },
+        disable: function() {
+            return this._setOptions({
+                disabled: true
+            });
+        },
+        _trigger: function(type, event, data) {
+            var prop, orig;
+            var callback = this.options[type];
+            data = data || {};
+            event = $.Event(event);
+            event.type = (type === this.widgetEventPrefix ? type : this.widgetEventPrefix + type).toLowerCase();
+            event.target = this.element[0];
+            orig = event.originalEvent;
+            if (orig) {
+                for (prop in orig) {
+                    if (!(prop in event)) {
+                        event[prop] = orig[prop];
+                    }
+                }
+            }
+            this.element.trigger(event, data);
+            return !(typeof callback === "function" && callback.apply(this.element[0], [ event ].concat(data)) === false || event.isDefaultPrevented());
+        }
+    };
+    var widget = $.widget;
+});
 
 (function($) {
     $.widget("jtsage.datebox", {
@@ -26,7 +304,7 @@
             controlWidthImp: "",
             breakpointWidth: "567px",
             zindex: "1100",
-            clickEvent: "vclick",
+            clickEvent: "click",
             useKinetic: true,
             flipSizeOverride: false,
             defaultValue: false,
@@ -132,49 +410,49 @@
                     calHeaderFormat: "%B %Y"
                 }
             },
-            theme_clearBtn: [ "recycle", "a" ],
-            theme_closeBtn: [ "check", "a" ],
-            theme_cancelBtn: [ "delete", "a" ],
-            theme_tomorrowBtn: [ "action", "a" ],
-            theme_todayBtn: [ "action", "a" ],
-            theme_dropdownContainer: "ui-body-a",
-            theme_modalContainer: "ui-body-a",
-            theme_inlineContainer: "ui-body-a",
-            theme_headerTheme: "inherit",
-            theme_headerBtn: [ "delete", "a" ],
-            theme_openButton: false,
-            theme_cal_Today: "b",
-            theme_cal_DayHigh: "b",
-            theme_cal_Selected: "active",
-            theme_cal_DateHigh: "b",
-            theme_cal_DateHighAlt: "b",
-            theme_cal_DateHighRec: "b",
-            theme_cal_Default: "a",
-            theme_cal_OutOfBounds: "a",
-            theme_cal_NextBtn: [ "plus", "a" ],
-            theme_cal_PrevBtn: [ "minus", "a" ],
-            theme_cal_Pickers: "a",
-            theme_cal_DateList: "a",
-            theme_dbox_NextBtn: [ "plus", "a" ],
-            theme_dbox_PrevBtn: [ "minus", "a" ],
-            theme_dbox_Inputs: "inherit",
-            theme_fbox_Selected: "a ui-flipswitch-active",
-            theme_fbox_Default: "a",
-            theme_fbox_Forbidden: "a ui-disabled",
+            theme_clearBtn: [ "clear", "is-fullwidth is-marginless is-secondary" ],
+            theme_closeBtn: [ "check", "is-fullwidth is-marginless is-secondary" ],
+            theme_cancelBtn: [ "cancel", "is-fullwidth is-marginless is-secondary" ],
+            theme_tomorrowBtn: [ "goto", "is-fullwidth is-marginless is-secondary" ],
+            theme_todayBtn: [ "goto", "is-fullwidth is-marginless is-secondary" ],
+            theme_dropdownContainer: "card",
+            theme_modalContainer: "card",
+            theme_inlineContainer: "card",
+            theme_headerTheme: "is-dark",
+            theme_headerBtn: [ "cancel", "is-light" ],
+            theme_openButton: "is-primary",
+            theme_cal_Today: "is-info",
+            theme_cal_DayHigh: "is-warning",
+            theme_cal_Selected: "is-success",
+            theme_cal_DateHigh: "is-warning",
+            theme_cal_DateHighAlt: "is-danger",
+            theme_cal_DateHighRec: "is-warning",
+            theme_cal_Default: "is-outlined is-primary",
+            theme_cal_OutOfBounds: "is-white",
+            theme_cal_NextBtn: [ "next", "is-white" ],
+            theme_cal_PrevBtn: [ "prev", "is-white" ],
+            theme_cal_Pickers: false,
+            theme_cal_DateList: false,
+            theme_dbox_NextBtn: [ "plus", "is-outlined is-dark" ],
+            theme_dbox_PrevBtn: [ "minus", "is-outlined is-dark" ],
+            theme_dbox_Inputs: false,
+            theme_fbox_Selected: "is-success",
+            theme_fbox_Default: "is-light",
+            theme_fbox_Forbidden: "is-danger",
             theme_fbox_RollHeight: "135px",
-            theme_slide_Today: "b",
-            theme_slide_DayHigh: "b",
-            theme_slide_Selected: "active",
-            theme_slide_DateHigh: "b",
-            theme_slide_DateHighAlt: "b",
-            theme_slide_DateHighRec: "b",
-            theme_slide_Default: "a",
-            theme_slide_NextBtn: [ "plus", "a" ],
-            theme_slide_PrevBtn: [ "minus", "a" ],
-            theme_slide_NextDateBtn: [ "carat-r", "a" ],
-            theme_slide_PrevDateBtn: [ "carat-l", "a" ],
-            theme_slide_Pickers: "a",
-            theme_slide_DateList: "a",
+            theme_slide_Today: "is-info",
+            theme_slide_DayHigh: "is-warning",
+            theme_slide_Selected: "is-success",
+            theme_slide_DateHigh: "is-warning",
+            theme_slide_DateHighAlt: "is-danger",
+            theme_slide_DateHighRec: "is-warning",
+            theme_slide_Default: "is-primary",
+            theme_slide_NextBtn: [ "plus", "is-white" ],
+            theme_slide_PrevBtn: [ "minus", "is-white" ],
+            theme_slide_NextDateBtn: [ "next", "is-white" ],
+            theme_slide_PrevDateBtn: [ "prev", "is-white" ],
+            theme_slide_Pickers: false,
+            theme_slide_DateList: false,
             theme_backgroundMask: {
                 position: "fixed",
                 left: 0,
@@ -183,11 +461,11 @@
                 bottom: 0,
                 backgroundColor: "rgba(0,0,0,.4)"
             },
-            theme_headStyle: " .center { text-align: center !important; } .p0 { padding: 0 !important; }.m0 { margin: 0 !important; } .w-100 { width: 100% !important; }",
+            theme_headStyle: " .db-show {padding-bottom: .3em; margin-bottom:.3em}",
             theme_spanStyle: false,
             buttonIconDate: "calendar",
             buttonIconTime: "clock",
-            disabledState: "ui-disabled",
+            disabledState: "disabled",
             tranDone: "webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend",
             calHighToday: true,
             calHighPick: true,
@@ -288,197 +566,182 @@
             }
         },
         style_attach: function(isInline) {
-            var w = this, possibleAttach = w.d.wrap.parent(), hardAttachPoint = $("body").find("#" + w.baseID + "-dbAttach");
+            var w = this, last, exitLoop = 0, possibleAttach = w.d.wrap, hardAttachPoint = $("body").find("#" + w.baseID + "-dbAttach");
             if (hardAttachPoint.length === 1) {
                 return hardAttachPoint;
             }
             if (!isInline) {
-                possibleAttach = $(".ui-page-active");
-                if (possibleAttach.length === 1) {
-                    return possibleAttach;
-                }
-                possibleAttach = w.d.input.closest("[data-role='page']");
-                if (possibleAttach.length === 1) {
-                    return possibleAttach;
-                }
                 return $("body");
             }
-            if (possibleAttach.hasClass("ui-field-contain")) {
-                return possibleAttach;
-            } else {
-                return w.d.wrap;
+            last = possibleAttach;
+            for (;;) {
+                exitLoop++;
+                possibleAttach = possibleAttach.parent();
+                if (possibleAttach.is("form")) {
+                    return last;
+                }
+                if (exitLoop > 20) {
+                    return $("body");
+                }
+                last = possibleAttach;
             }
         },
         style_btn: function(theme, contents) {
             var retty;
             contents = typeof contents === "undefined" ? "" : contents;
-            retty = "<a href='#' role='button' class='ui-btn ui-mini ui-btn-" + theme[1] + "";
-            retty += theme[0] !== false ? " ui-icon-" + theme[0] : "";
-            retty += contents === "" ? " ui-corner-all ui-btn-icon-notext" : " ui-btn-icon-left";
-            retty += "'>" + contents + "</a>";
+            retty = "<a href='#' role='button' class='button " + theme[1] + "'>";
+            retty += theme[0] !== false ? "<span>" + this.icons.getIcon(theme[0]) + "</span> " : "";
+            retty += contents + "</a>";
             return retty;
         },
-        style_btnGrp: function(collapse) {
-            var style = collapse ? "margin: 0 auto;" : "margin: 0 .446em";
-            return $("<div style='" + style + "' class='ui-controlgroup-controls'>");
-        },
-        style_btnGrpOut: function(collapse, inner) {
-            var cls = collapse === true ? "ui-controlgroup-horizontal" : "ui-controlgroup-vertical", style = collapse === true ? "style='text-align:center'" : "";
-            inner.find(".ui-btn").last().addClass("ui-last-child");
-            inner.find(".ui-btn").first().addClass("ui-first-child");
-            return $("<div " + style + " class='ui-controlgroup " + cls + "'>").append(inner);
+        style_btnGrp: function() {
+            return $("<div class='buttons is-fullwidth' style='padding: .3em;'>");
         },
         style_inWrap: function(originalInput) {
-            return originalInput.parent().addClass("ui-input-has-clear");
+            originalInput.closest(".field").addClass("has-addons");
+            originalInput.closest(".control").addClass("is-expanded");
+            return originalInput.closest(".field");
         },
-        style_inBtn: function(icon, title) {
-            return "<a href='javascript: return false;' " + "class='dbOpenButton ui-input-clear ui-btn ui-icon-" + icon + " ui-btn-icon-notext ui-corner-all' " + "title='" + title + "'>" + title + "</a>";
+        style_inBtn: function(icon, title, theme) {
+            return '<div class="control"><a title="' + title + '" class="dbOpenButton button ' + theme + '">' + this.icons.getIcon(icon) + "</a></div>";
         },
-        style_inNoBtn: function(originalInputWrap) {
-            originalInputWrap.parent().removeClass("ui-has-clear");
+        style_inNoBtn: function() {
+            return true;
         },
         style_inHide: function() {
-            var w = this, hideMe = w.d.wrap.parent();
-            if (hideMe.hasClass("ui-field-contain")) {
-                hideMe.hide();
-            } else {
-                w.d.wrap.hide();
+            var w = this, last = w.d.wrap, exitLoop = 0, hideMe = w.d.wrap;
+            for (;;) {
+                exitLoop++;
+                hideMe = hideMe.parent();
+                if (hideMe.is("form")) {
+                    last.hide();
+                    return true;
+                }
+                if (exitLoop > 20) {
+                    w.d.wrap.hide();
+                    return true;
+                }
+                last = hideMe;
             }
         },
         style_mainHead: function(text, themeBar, themeButton) {
-            return "<div class='ui-header ui-bar-" + themeBar + "'>" + "<h1 class='ui-title'>" + text + "</h5>" + this.style_btn([ themeButton[0], themeButton[1] + " dbCloser ui-btn-right" ]) + "</div>";
+            return "" + '<div class="navbar ' + themeBar + '"><div class="navbar-brand">' + '<strong class="navbar-item">' + text + "</strong>" + '</div><div class="is-active navbar-menu">' + '<div class="navbar-end"><div class="navbar-item">' + this.style_btn([ themeButton[0], themeButton[1] + " dbCloser" ]) + "</div></div></div></div>";
         },
         style_subHead: function(text) {
-            return $("<div class='dbHeader'>" + "<h3 class='center'>" + text + "</h3>" + "</div>");
+            return $("<div class='is-size-5 has-text-centered dbHeader' style='padding: .3em 0'>" + text + "</div>");
         },
         style_pnHead: function(txt, prevBtn, nextBtn, prevCtl, nextCtl) {
-            var returnVal = $("<div class='ui-header' style='border:0; padding: 0 3px 8px;'>");
-            $(this.style_btn([ prevBtn[0], prevBtn[1] + " ui-btn-left " + prevCtl ])).appendTo(returnVal);
-            $("<h1 class='ui-title' style='margin: 0 15%'>" + txt + "</h1>").appendTo(returnVal);
-            $(this.style_btn([ nextBtn[0], nextBtn[1] + " ui-btn-right " + nextCtl ])).appendTo(returnVal);
+            var returnVal = $("<div class='columns is-mobile is-vcentered' style='padding:.3em'>");
+            $("<div class='column is-2'>").append($(this.style_btn([ prevBtn[0], prevBtn[1] + " is-fullwidth " + prevCtl ]))).appendTo(returnVal);
+            $("<div class='column'><div class='title is-5 has-text-centered'>" + txt + "</div></div>").appendTo(returnVal);
+            $("<div class='column is-2'>").append($(this.style_btn([ nextBtn[0], nextBtn[1] + " is-fullwidth " + nextCtl ]))).appendTo(returnVal);
             return returnVal;
         },
         style_picker: function(ranges, theme, monthCtl, yearCtl) {
-            var i = 0, returnVal = "<div style='padding-bottom: 8px' class='" + "ui-controlgroup ui-controlgroup-horizontal ui-corner-all ui-mini'>";
-            returnVal += "<div class='ui-controlgroup-controls w-100'>";
-            returnVal += "<div class='ui-select' style='width:60%'>";
-            returnVal += "<div id='" + monthCtl + "-button' class='ui-btn-" + theme + " ui-btn ui-icon-carat-d ui-btn-icon-right ui-corner-all ui-shadow ui-first-child'>";
-            for (i = 0; i < ranges.month.length; i++) {
-                if (ranges.month[i][2] === true) {
-                    returnVal += "<span>" + ranges.month[i][1] + "</span>";
-                }
-            }
+            var returnVal = "";
+            returnVal += "<div class='columns is-mobile is-gapless' style='padding:.3em'>";
+            returnVal += "<div class='column is-8'><div class='select is-fullwidth'>";
             returnVal += this._stdSel(ranges.month, monthCtl, "");
             returnVal += "</div></div>";
-            returnVal += "<div class='ui-select' style='width:40%'>";
-            returnVal += "<div id='" + yearCtl + "-button' class='ui-btn-" + theme + " ui-btn ui-icon-carat-d ui-btn-icon-right ui-corner-all ui-shadow ui-last-child'>";
-            for (i = 0; i < ranges.year.length; i++) {
-                if (ranges.year[i][2] === true) {
-                    returnVal += "<span>" + ranges.year[i][1] + "</span>";
-                }
-            }
+            returnVal += "<div class='column is-4'><div class='select is-fullwidth'>";
             returnVal += this._stdSel(ranges.year, yearCtl, "");
             returnVal += "</div></div>";
-            returnVal += "</div></div>";
+            returnVal += "</div>";
             return $(returnVal);
         },
         style_dateList: function(listLabel, list, theme, ctlCls) {
             var returnVal = "", newList = list.slice();
             newList.unshift([ false, listLabel, true ]);
-            returnVal += "<div class='ui-select'>";
-            returnVal += "<div id='" + ctlCls + "-button' style='margin: 0 .446em 8px;' class='" + "ui-mini ui-btn ui-icon-carat-d ui-btn-" + theme + " ui-btn-icon-right ui-corner-all'>";
-            returnVal += "<span>" + listLabel + "</span>";
+            returnVal += "<div class='select is-fullwidth' ";
+            returnVal += "style='margin:.8em 0; padding:0 .3em;'>";
             returnVal += this._stdSel(newList, ctlCls, "");
-            returnVal += "</div></div>";
+            returnVal += "</div>";
             return $(returnVal);
         },
         style_calGrid: function() {
-            return $("<div><table class='dbCalGrid w-100'></table></div>");
+            return $("<div style='padding:.3em'><table class='dbCalGrid' style='width:100%'></table></div>");
         },
         style_calRow: function() {
             return $("<tr>");
         },
         style_calBtn: function(data, totalElements) {
-            var styles_TD = "width:" + 100 / totalElements + "%", styles_A = [ "padding-right:0", "padding-left:0" ], class_A = [ "dbEvent", "ui-btn", "ui-mini", "m0", "ui-btn-" + data.theme, data.bad ? "ui-disabled" : "" ], disable = data.bad ? "disabled='disabled'" : "";
-            return $("<td class='p0 m0' style='" + styles_TD + "'>" + "<a style='" + styles_A.join(";") + "' class='" + class_A.join(" ") + "' href='#' " + disable + ">" + data.displayText + "</a></td>");
+            var style = totalElements !== undefined ? " style='width: " + 100 / totalElements + "%'" : "", disable = data.bad ? "disabled='disabled'" : "", cls = "class='dbEvent is-fullwidth button " + data.theme + (data.bad ? " disabled" : "") + "'";
+            return $("<td class='has-text-centered'" + style + ">" + "<a href='#' style='padding-left:0; padding-right:0;' " + cls + " " + disable + ">" + data.displayText + "</a>" + "</td>");
         },
         style_calTxt: function(text, header, totalElements) {
-            var styles = [ "width:" + 100 / totalElements + "%", header ? "font-weight:bold" : "" ];
-            return $("<td class='p0 m0 center' style='" + styles.join(";") + "'>" + text + "</td>");
+            var style = totalElements !== undefined ? " style='width: " + 100 / totalElements + "%'" : "", cls = header ? " has-text-weight-bold" : "";
+            return $("<td class='has-text-centered" + cls + "'" + style + ">" + text + "</td>");
         },
         style_dboxCtr: function() {
-            return $("<table class='w-100'>");
+            return $("<div>");
         },
         style_dboxRow: function() {
-            return $("<tr>");
+            return $("<div class='columns is-mobile is-gapless' " + "style='padding-left:.3em; padding-right: .3em; margin-bottom: .3em' >");
         },
-        style_dboxCtrl: function(prevBtn, nextBtn, mainCls, label, inTheme) {
+        style_dboxCtrl: function(prevBtn, nextBtn, mainCls, label) {
             var returnVal = "";
-            returnVal += "<td class='dbBox" + mainCls + "'>";
-            returnVal += "<a href='#' role='button' class='ui-corner-all ui-btn ui-mini ui-btn-";
-            returnVal += nextBtn[1] + " ui-icon-" + nextBtn[0] + " ui-btn-icon-top dbBoxNext m0' ";
-            returnVal += "style='padding-top:2.1em; border-bottom-left-radius:0;" + "border-bottom-right-radius:0;'>";
-            returnVal += "</a>";
+            returnVal += "<div class='column dbBox" + mainCls + "'>";
+            returnVal += this.style_btn([ nextBtn[0], nextBtn[1] + " dbBoxNext is-fullwidth" ]);
             if (label !== null) {
-                returnVal += "<div class='m0 center ui-input-text ui-body-inherit' " + "style='height:auto; padding: .3em 0;'>" + label + "</div>";
+                returnVal += "<div class='w-100 form-control rounded-0 p-0 text-center' " + "style='height:auto'>" + label + "</div>";
             }
-            returnVal += "<div class='m0 ui-input-text ui-mini ui-body-" + inTheme + "'>";
-            returnVal += "<input class='p0 center' type='text'></div>";
-            returnVal += "<a href='#' role='button' class='ui-corner-all ui-btn ui-mini ui-btn-";
-            returnVal += prevBtn[1] + " ui-icon-" + prevBtn[0] + " ui-btn-icon-top dbBoxPrev m0' ";
-            returnVal += "style='padding-top:2.1em; border-top-left-radius:0;" + "border-top-right-radius:0;'>";
-            returnVal += "</a>";
+            returnVal += "<input style='padding-left:0;padding-right:0' type='text' ";
+            returnVal += "class='input has-text-centered'>";
+            returnVal += this.style_btn([ prevBtn[0], prevBtn[1] + " dbBoxNext is-fullwidth" ]);
             returnVal += "</div>";
             return $(returnVal);
         },
         style_slideGrid: function() {
-            return $("<div><table class='dbSlideGrid w-100'></table></div>");
+            return $("<div><table class='dbSlideGrid' style='width:100%'></table></div>");
         },
         style_slideRow: function() {
             return $("<tr>");
         },
         style_slideBtn: function(data) {
-            var style = " style='width: " + 100 / 8 + "%'", disable = data.bad ? "disabled='disabled'" : "", cls = "class='m0 dbEventS w-100 ui-btn ui-mini ui-btn-" + data.theme + (data.bad ? " disabled" : "") + "'";
-            return $("<td class='m-0 p-0 text-center'" + style + ">" + "<a style='padding:.7em 0;' href='#' " + cls + " " + disable + ">" + "<small>" + this.__("daysOfWeekShort")[data.dateObj.getDay()] + "</small><br>" + data.dateObj.getDate() + "</a>" + "</td>");
+            var style = " style='width: " + 100 / 8 + "%'", disable = data.bad ? "disabled='disabled'" : "", cls = "class='dbEventS button is-paddingless is-fullwidth " + data.theme + (data.bad ? " disabled" : "") + "'";
+            return $("" + "<td class='has-text-centered'" + style + ">" + "<span class='is-size-7'>" + this.__("daysOfWeekShort")[data.dateObj.getDay()] + "</span>" + "<a href='#' " + cls + " " + disable + ">" + "<span class='is-size-4'>" + data.dateObj.getDate() + "</span></a>" + "</td>");
         },
         style_slideCtrl: function(eventCls, theme) {
-            var style = " style='width: " + 100 / 8 / 2 + "%'", cls = "class='m0 ui-corner-all ui-btn ui-mini ui-btn-icon-notext ui-btn-" + theme[1] + " " + eventCls + " ui-icon-" + theme[0] + "'";
-            return $("<td " + style + ">" + "<a href='#' " + cls + "></a></td>");
+            var style = " style='vertical-align: middle; width: " + 100 / 8 / 2 + "%'", cls = "class='button is-small is-paddingless is-fullwidth " + theme[1] + " " + eventCls + "'";
+            return $("<td class='has-text-centered'" + style + ">" + "<a href='#' " + cls + ">" + this.icons.getIcon(theme[0]) + "</a></td>");
         },
         style_fboxCtr: function(size) {
-            return $("<div style='margin: 0 5px 8px; height: " + size + "; overflow: hidden'>");
+            return $("<div class='columns is-mobile is-gapless' style='margin: 0; padding: 0 3px; height: " + size + "; overflow: hidden'>");
         },
         style_fboxDurLbls: function() {
-            return $("<div style='margin: 5px;'>");
+            return $("<div class='columns is-mobile is-gapless' style='margin-bottom: 0px;'>");
         },
         style_fboxDurLbl: function(text, items) {
-            return $("<div class='center' " + "style='display:inline-block; width: " + 100 / items + "%'>" + text + "</div>");
+            return $("<div class='column has-text-centered' style='width: " + 100 / items + "%'>" + text + "</div>");
         },
-        style_fboxRollCtr: function(total) {
-            return $("<div style='float:left; width:" + 100 / total + "%'>");
+        style_fboxRollCtr: function() {
+            return $("<div class='column'>");
         },
         style_fboxRollPrt: function() {
-            return $("<ul style='list-style-type: none; display: inline;'>");
+            return $("<div>");
         },
         style_fboxRollCld: function(text, cls) {
-            return $("<li style='height: 30px; line-height: 30px;' class='center ui-body-" + cls + "'>" + text + "</li>");
+            return $("<p class='field' style='margin-bottom: 0px'>" + "<span style='width: 100%' class='tag is-medium " + cls + "'>" + text + "</span></p>");
         },
         style_fboxLens: function() {
-            return $("<div style='width: 96%; height: 40px; border: 1px solid #eee; margin: 0 1.5%;' " + "class='ui-overlay-shadow'>");
+            return $("<div class='lensylens' style='height:48px; border:1px solid black; " + "box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); margin-left: 1px; margin-right: 1px;' >");
         },
         style_fboxPos: function() {
-            var fullRoller, firstItem, height_Roller, intended_Top, w = this, o = this.options, height_Outside = w.d.intHTML.find(".dbRollerV").outerHeight(), theLens = w.d.intHTML.find(".dbLens").first(), height_Lens = theLens.outerHeight();
+            var fullRoller, firstItem, height_Roller, intended_Top, w = this, o = this.options, height_Container = w.d.intHTML.find(".dbRollerC").height(), height_Outside = w.d.intHTML.find(".dbRollerV").outerHeight(true), theLens = w.d.intHTML.find(".dbLens").first(), height_Lens = theLens.outerHeight();
+            if (height_Container < 1) {
+                return true;
+            }
             intended_Top = -1 * (height_Outside / 2 + height_Lens / 2);
             theLens.css({
-                top: intended_Top + -3,
+                top: intended_Top,
                 marginBottom: -1 * height_Lens
             });
             w.d.intHTML.find(".dbRoller").each(function() {
                 fullRoller = $(this);
                 firstItem = fullRoller.children().first();
                 if (firstItem.css("marginTop") === "0px") {
-                    height_Roller = (fullRoller.children().length + 1) * firstItem.outerHeight();
-                    intended_Top = -1 * (height_Roller / 2) + height_Outside / 2;
+                    height_Roller = fullRoller.outerHeight(false);
+                    intended_Top = -1 * (height_Roller / 2) + height_Container / 2;
                     if (o.flipboxLensAdjust !== false) {
                         intended_Top += o.flipboxLensAdjust;
                     }
