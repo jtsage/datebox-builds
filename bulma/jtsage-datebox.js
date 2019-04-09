@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.0.0 (bulma)
- * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2"}
- * Date: 2019-04-01T22:07:56.594Z
+ * JTSage-DateBox-5.1.0 (bulma)
+ * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3"}
+ * Date: 2019-04-09T19:02:14.756Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -314,6 +314,9 @@
             displayMode: "dropdown",
             displayDropdownPosition: "bottomRight",
             displayInlinePosition: "center",
+            displayForcePosition: false,
+            dismissOutsideClick: true,
+            dismissOnEscape: false,
             useHeader: true,
             useImmediate: false,
             useButton: true,
@@ -505,6 +508,7 @@
                 s: 30,
                 a: 30
             },
+            fboxNatural: "default",
             slideHighToday: true,
             slideHighPick: true,
             slideUsePickers: false,
@@ -517,16 +521,20 @@
         },
         icons: {
             getIcon: function(name) {
+                var w = this, icnF = w.options.iconFactory;
                 if (name === false) {
                     return false;
+                }
+                if (typeof icnF === "function") {
+                    return icnF.call(w, name);
                 }
                 if (name.substr(0, 4) === "<svg") {
                     return name;
                 }
-                if (typeof this[name] !== "undefined") {
-                    return this[name];
+                if (typeof w.icons[name] !== "undefined") {
+                    return w.icons[name];
                 }
-                return this.cancel;
+                return w.icons.cancel;
             },
             next: '<svg width="12" height="12" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M9.8 6L4 11.8l-1.8-1.7L6.6 6 2.2 2 4 .1 9.8 6z" clip-rule="evenodd" fill-rule="evenodd"/></svg>',
             prev: '<svg width="12" height="12" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M2.2 6L8 .2l1.8 1.7L5.4 6l4.4 4L8 11.9 2.2 6z" clip-rule="evenodd" fill-rule="evenodd"/></svg>',
@@ -590,7 +598,7 @@
             var retty;
             contents = typeof contents === "undefined" ? "" : contents;
             retty = "<a href='#' role='button' class='button " + theme[1] + "'>";
-            retty += theme[0] !== false ? "<span>" + this.icons.getIcon(theme[0]) + "</span> " : "";
+            retty += theme[0] !== false ? "<span>" + this.icons.getIcon.call(this, theme[0]) + "</span> " : "";
             retty += contents + "</a>";
             return retty;
         },
@@ -603,7 +611,7 @@
             return originalInput.closest(".field");
         },
         style_inBtn: function(icon, title, theme) {
-            return '<div class="control"><a title="' + title + '" class="dbOpenButton button ' + theme + '">' + this.icons.getIcon(icon) + "</a></div>";
+            return '<div class="control"><a title="' + title + '" class="dbOpenButton button ' + theme + '">' + this.icons.getIcon.call(this, icon) + "</a></div>";
         },
         style_inNoBtn: function() {
             return true;
@@ -703,7 +711,7 @@
         },
         style_slideCtrl: function(eventCls, theme) {
             var style = " style='vertical-align: middle; width: " + 100 / 8 / 2 + "%'", cls = "class='button is-small is-paddingless is-fullwidth " + theme[1] + " " + eventCls + "'";
-            return $("<td class='has-text-centered'" + style + ">" + "<a href='#' " + cls + ">" + this.icons.getIcon(theme[0]) + "</a></td>");
+            return $("<td class='has-text-centered'" + style + ">" + "<a href='#' " + cls + ">" + this.icons.getIcon.call(this, theme[0]) + "</a></td>");
         },
         style_fboxCtr: function(size) {
             return $("<div class='columns is-mobile is-gapless' style='margin: 0; padding: 0 3px; height: " + size + "; overflow: hidden'>");
@@ -1720,6 +1728,7 @@
                                 }
                             }
                         }
+                        w.skipChange = true;
                         $(this).trigger("change");
                     }
                     break;
@@ -1779,7 +1788,13 @@
                 w.d.intHTML = $("<span>");
                 w.d.intHTML.addClass(o.theme_spanStyle);
                 if (o.calNoHeader === false) {
-                    w.style_pnHead(w._formatter(w.__("calHeaderFormat"), w.theDate), o.theme_cal_PrevBtn, o.theme_cal_NextBtn, "dbCalPrev", "dbCalNext").appendTo(w.d.intHTML);
+                    calContent = w.style_pnHead(w._formatter(w.__("calHeaderFormat"), w.theDate), w.__("isRTL") === true ? o.theme_cal_NextBtn : o.theme_cal_PrevBtn, w.__("isRTL") === true ? o.theme_cal_PrevBtn : o.theme_cal_NextBtn, "dbCalPrev", "dbCalNext");
+                    if (w.__("isRTL") === true) {
+                        calContent.children().each(function(i, item) {
+                            calContent.prepend(item);
+                        });
+                    }
+                    calContent.appendTo(w.d.intHTML);
                     w.d.intHTML.on(o.clickEvent, ".dbCalNext", function(e) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1799,7 +1814,13 @@
                     });
                 }
                 if (o.calUsePickers === true) {
-                    w.style_picker(w._pickRanges(date_displayMonth, date_displayYear, date_realToday.get(0), o.calYearPickRelative), o.theme_cal_Pickers, "dbCalPickMonth", "dbCalPickYear").appendTo(w.d.intHTML);
+                    calContent = w.style_picker(w._pickRanges(date_displayMonth, date_displayYear, date_realToday.get(0), o.calYearPickRelative), o.theme_cal_Pickers, "dbCalPickMonth", "dbCalPickYear");
+                    if (w.__("isRTL") === true) {
+                        calContent.children().each(function(i, item) {
+                            calContent.prepend(item);
+                        });
+                    }
+                    calContent.appendTo(w.d.intHTML);
                     w.d.intHTML.on("change", "#dbCalPickMonth, #dbCalPickYear", function() {
                         if (w.theDate.get(2) > 28) {
                             w.theDate.setD(2, 1);
@@ -1832,9 +1853,8 @@
                     }
                     weekdayControl.appendTo(calContent);
                     if (w.__("isRTL") === true) {
-                        weekdayControl.css({
-                            display: "flex",
-                            flexDirection: "row-reverse"
+                        weekdayControl.children().each(function(i, item) {
+                            weekdayControl.prepend(item);
                         });
                     }
                 }
@@ -1862,9 +1882,8 @@
                         date_working.adj(2, 1);
                     }
                     if (w.__("isRTL") === true) {
-                        calCntlRow.css({
-                            display: "flex",
-                            flexDirection: "row-reverse"
+                        calCntlRow.children().each(function(i, item) {
+                            calCntlRow.prepend(item);
                         });
                     }
                     calCntlRow.appendTo(calContent);
@@ -1893,20 +1912,11 @@
                             method: "close"
                         });
                     }
-                }).on("swipeleft", function() {
-                    w._offset("m", 1);
-                }).on("swiperight", function() {
-                    w._offset("m", -1);
-                }).on("mousewheel", function(e, d) {
+                }).on(w.wheelEvent, function(e, d) {
                     e.preventDefault();
-                    if (d > 0) {
-                        w.theDate.setD(2, 1);
-                        w._offset("m", 1);
-                    }
-                    if (d < 0) {
-                        w.theDate.setD(2, 1);
-                        w._offset("m", -1);
-                    }
+                    d = typeof d === "undefined" ? Math.sign(e.originalEvent.wheelDelta) : d;
+                    w.theDate.setD(2, 1);
+                    w._offset("m", d > 0 ? 1 : -1);
                 });
             },
             timebox: function() {
@@ -1962,6 +1972,11 @@
                     });
                     ctrlRow.append(ctrlWrk);
                 }
+                if (w.__("isRTL") === true) {
+                    ctrlRow.children().each(function(i, item) {
+                        ctrlRow.prepend(item);
+                    });
+                }
                 ctrlContainer.append(ctrlRow);
                 ctrlContainer.appendTo(w.d.intHTML);
                 w._dbox_run_update(true);
@@ -1980,8 +1995,9 @@
                             method: "close"
                         });
                     }
-                }).on("mousewheel", "input", function(e, d) {
+                }).on(w.wheelEvent, "input", function(e, d) {
                     e.preventDefault();
+                    d = typeof d === "undefined" ? Math.sign(e.originalEvent.wheelDelta) : d;
                     w._offset($(this).data("field"), (d < 0 ? -1 : 1) * $(this).data("amount"));
                 }).on(o.clickEvent, ".dbBoxPrev, .dbBoxNext", function(e) {
                     w.d.intHTML.find(":focus").blur();
@@ -2021,6 +2037,7 @@
                     w._getCleanDur();
                     w._fixstepper(w.fldOrder);
                 }
+                o.fboxNatural = o.fboxNatural === "default" ? dur ? true : false : o.fboxNatural;
                 if (o.mode === "flipbox" || o.mode === "datetimeflipbox") {
                     w.style_subHead(w._formatter(w.__("headerFormat"), w.theDate)).appendTo(w.d.intHTML);
                 }
@@ -2029,6 +2046,11 @@
                     for (cntlFieldIdx = 0; cntlFieldIdx < w.fldOrder.length; cntlFieldIdx++) {
                         thisField = w.fldOrder[cntlFieldIdx];
                         cntlContain.append(w.style_fboxDurLbl(w.__("durationLabel")[[ "d", "h", "i", "s" ].indexOf(thisField)], w.fldOrder.length));
+                    }
+                    if (w.__("isRTL") === true) {
+                        cntlContain.css({
+                            direction: "rtl"
+                        });
                     }
                     w.d.intHTML.append(cntlContain);
                 }
@@ -2047,8 +2069,17 @@
                             cntlRoller.append(w.style_fboxRollCld(w._fbox_do_dur_math(thisField, cntlRow, cntlFieldIdx), cntlRow === 0 ? o.theme_fbox_Selected : o.theme_fbox_Default));
                         }
                     }
+                    if (o.fboxNatural) {
+                        cntlRoller.children().each(function(i, item) {
+                            cntlRoller.prepend(item);
+                        });
+                    }
                     cntlContain.append(cntlRoller);
-                    flipContent.append(cntlContain);
+                    if (w.__("isRTL") === true) {
+                        flipContent.prepend(cntlContain);
+                    } else {
+                        flipContent.append(cntlContain);
+                    }
                 }
                 w.d.intHTML.append(flipContent);
                 w.style_fboxLens().addClass("dbLens").css({
@@ -2056,10 +2087,7 @@
                     position: "relative"
                 }).appendTo(w.d.intHTML);
                 w.d.intHTML.append(w._doBottomButtons.call(w, true));
-                w.d.intHTML.on("mousewheel", ".ui-overlay-shadow", function(e, d) {
-                    e.preventDefault();
-                    w._offset($(this).data("field"), (d < 0 ? 1 : -1) * $(this).data("amount"));
-                }).on(g.eStart, ".dbRoller", function(e, f) {
+                w.d.intHTML.on(g.eStart, ".dbRoller", function(e, f) {
                     if (!g.move) {
                         if (typeof f !== "undefined") {
                             e = f;
@@ -2069,7 +2097,7 @@
                         g.pos = parseInt(g.target.css("marginTop").replace(/px/i, ""), 10);
                         g.start = e.type.substr(0, 5) === "touch" ? e.originalEvent.changedTouches[0].pageY : e.pageY;
                         g.end = false;
-                        g.direc = 1;
+                        g.direc = o.fboxNatural ? -1 : 1;
                         g.velocity = 0;
                         g.time = Date.now();
                         e.stopPropagation();
@@ -2120,7 +2148,7 @@
                 }
                 calContent = $(w.style_slideGrid()).appendTo(w.d.intHTML).find(".dbSlideGrid").first();
                 calCntlRow = w.style_slideRow();
-                calCntlRow.append(w.style_slideCtrl("dbSlideWkPrev", o.theme_slide_PrevDateBtn));
+                calCntlRow.append(w.style_slideCtrl("dbSlideWkPrev", w.__("isRTL") === true ? o.theme_slide_NextDateBtn : o.theme_slide_PrevDateBtn));
                 for (cntlCol = -3; cntlCol <= 3; cntlCol++) {
                     cntlObj = Object.assign(w._newDateChecker(date_working), w._slide_ThemeDate(date_working));
                     cntlObj.htmlObj = w.style_slideBtn(cntlObj);
@@ -2129,11 +2157,10 @@
                     calCntlRow.append(cntlObj.htmlObj);
                     date_working.adj(2, 1);
                 }
-                calCntlRow.append(w.style_slideCtrl("dbSlideWkNext", o.theme_slide_NextDateBtn));
+                calCntlRow.append(w.style_slideCtrl("dbSlideWkNext", w.__("isRTL") === true ? o.theme_slide_PrevDateBtn : o.theme_slide_NextDateBtn));
                 if (w.__("isRTL") === true) {
-                    calCntlRow.css({
-                        display: "flex",
-                        flexDirection: "row-reverse"
+                    calCntlRow.children().each(function(i, item) {
+                        calCntlRow.prepend(item);
                     });
                 }
                 calCntlRow.appendTo(calContent);
@@ -2171,18 +2198,10 @@
                     e.stopPropagation();
                     w._offset("d", -7);
                     return false;
-                }).on("swipeleft", function() {
-                    w._offset("d", 7);
-                }).on("swiperight", function() {
-                    w._offset("d", -7);
-                }).on("mousewheel", function(e, d) {
+                }).on(w.wheelEvent, function(e, d) {
                     e.preventDefault();
-                    if (d > 0) {
-                        w._offset("d", 7);
-                    }
-                    if (d < 0) {
-                        w._offset("d", -7);
-                    }
+                    d = typeof d === "undefined" ? Math.sign(e.originalEvent.wheelDelta) : d;
+                    w._offset("d", d > 0 ? 7 : -7);
                 });
             }
         },
@@ -2348,7 +2367,14 @@
             return test < 0 ? 0 : test;
         },
         getModalPosition: function() {
-            var w = this, widget = w.d.mainWrap[0].getBoundingClientRect();
+            var w = this, fixed = this.options.displayForcePosition, widget = w.d.mainWrap[0].getBoundingClientRect();
+            if (fixed !== false) {
+                return {
+                    position: "absolute",
+                    top: fixed[0],
+                    left: fixed[1]
+                };
+            }
             return {
                 position: "fixed",
                 top: "50%",
@@ -2358,7 +2384,7 @@
             };
         },
         getDropPosition: function(placement) {
-            var w = this, compd, o = this.options, rect = w.d.wrap[0].getBoundingClientRect(), widget = w.d.mainWrap[0].getBoundingClientRect(), tOff = window.pageYOffset, lOff = window.pageXOffset, smallScr = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) <= o.breakpointWidth.replace("px", "");
+            var w = this, compd, o = this.options, fixed = this.options.displayForcePosition, rect = w.d.wrap[0].getBoundingClientRect(), widget = w.d.mainWrap[0].getBoundingClientRect(), tOff = window.pageYOffset, lOff = window.pageXOffset, smallScr = Math.max(document.documentElement.clientWidth, window.innerWidth || 0) <= o.breakpointWidth.replace("px", "");
             compd = {
                 centerLeft: {
                     top: w._posZero(tOff + rect.top + rect.height / 2 - widget.height / 2),
@@ -2399,6 +2425,13 @@
             };
             if (typeof compd[placement] === "undefined") {
                 placement = "bottomRight";
+            }
+            if (fixed !== false) {
+                return {
+                    position: "absolute",
+                    top: fixed[0],
+                    left: fixed[1]
+                };
             }
             return {
                 position: "absolute",
@@ -2821,7 +2854,7 @@
                 w.d.mainWrap.detach();
                 break;
             }
-            $(document).off(w.drag.eMove).off(w.drag.eEnd).off(w.drag.eEndA).off("resize" + w.eventNamespace);
+            $(document).off(w.drag.eMove).off(w.drag.eEnd).off(w.drag.eEndA).off("resize" + w.eventNamespace).off("keydown" + w.eventNamespace);
             if (o.useFocus) {
                 w.fastReopen = true;
                 setTimeout(function(t) {
@@ -2858,9 +2891,11 @@
             if (o.usePlaceholder !== false) {
                 w.d.input.attr("placeholder", w._grabLabel(typeof o.usePlaceholder === "string" ? o.usePlaceholder : ""));
             }
+            w.wheelEvent = typeof $.event.special.mousewheel !== "undefined" ? "mousewheel" : "wheel";
             w.firstOfGrid = false;
             w.lastOfGrid = false;
             w.selectedInGrid = false;
+            w.skipChange = false;
             w.cancelClose = false;
             w.disabled = false;
             w._date = window.Date;
@@ -2910,6 +2945,10 @@
                     });
                 }
             }).on("change.datebox", function() {
+                if (w.skipChange) {
+                    w.skipChange = false;
+                    return true;
+                }
                 if (o.runOnBlurCallback === false) {
                     if (o.safeEdit === true) {
                         runTmp = w._makeDate(w.d.input.val(), true);
@@ -2987,7 +3026,7 @@
             });
         },
         open: function() {
-            var w = this, o = this.options, basepop = {};
+            var w = this, o = this.options, dMode = o.displayMode, basepop = {};
             if (o.useFocus && w.fastReopen === true) {
                 w.d.input.blur();
                 return false;
@@ -3097,20 +3136,37 @@
                 });
                 w.d.backdrop = $("<div class='jtsage-datebox-backdrop-div'></div>").css(o.theme_backgroundMask).css("zIndex", o.zindex - 1).appendTo(o.displayMode === "modal" ? w.style_attach(false) : "body").on(o.clickEvent, function(e) {
                     e.preventDefault();
-                    w._t({
-                        method: "close",
-                        closeCancel: true
-                    });
+                    if (o.dismissOutsideClick) {
+                        w._t({
+                            method: "close",
+                            closeCancel: true
+                        });
+                    }
                 });
                 w.d.mainWrap.css(o.displayMode === "modal" ? w.getModalPosition.call(w) : w.getDropPosition.call(this, o.displayDropdownPosition));
                 break;
             }
-            $(window).on("resize" + w.eventNamespace, function() {
-                var dMode = this.options.displayMode;
-                if (dMode === "modal" || dMode === "blind") {
+            if (dMode === "modal" || dMode === "dropdown") {
+                $(document).on("resize" + w.eventNamespace, function() {
                     this.d.mainWarp.css(dMode === "modal" ? this.getModalPosition.call(this) : this.getDropPosition.call(this, this.options.displayDropdownPosition));
+                }.bind(w));
+                if (o.dismissOnEscape) {
+                    $(document).on("keydown" + w.eventNamespace, function(e) {
+                        var isEscape = false;
+                        if ("key" in e) {
+                            isEscape = e.key === "Escape" || e.key === "Esc";
+                        } else {
+                            isEscape = e.keyCode === 27;
+                        }
+                        if (isEscape) {
+                            this._t({
+                                method: "close",
+                                closeCancel: true
+                            });
+                        }
+                    }.bind(w));
                 }
-            }.bind(w));
+            }
             window.setTimeout(function() {
                 w.d.mainWrap.addClass("db-show");
             }, 0);
@@ -3359,7 +3415,7 @@
                 return w.__("timeFormat") === 12 ? testDate.get12hr() : testDate.get(3);
 
               case "i":
-                return w._zPad(w.theDate.copy([ 0, 0, 0, 0, offset ]).get(4));
+                return w._zPad(w.theDate.copy([ 0, 0, 0, 0, offset * o.minuteStep ]).get(4));
 
               case "s":
                 return w._zPad(w.theDate.copy([ 0, 0, 0, 0, 0, offset ]).get(5));
