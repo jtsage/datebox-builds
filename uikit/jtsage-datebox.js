@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.1.0 (uikit)
+ * JTSage-DateBox-5.1.1 (uikit)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3"}
- * Date: 2019-04-09T19:02:14.756Z
+ * Date: 2019-05-20T14:54:01.049Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -305,6 +305,7 @@
             breakpointWidth: "567px",
             zindex: "1100",
             clickEvent: "click",
+            disableWheel: false,
             useKinetic: true,
             flipSizeOverride: false,
             defaultValue: false,
@@ -1189,19 +1190,14 @@
                 }
                 return testDate > this.realToday;
             },
-            minDays: function(testDate) {
-                var testOption = this.options.minDays;
-                if (testOption === false) {
+            minmaxDays: function(testDate) {
+                var testOption1 = this.options.minDays, testOption2 = this.options.maxDays, validMin, validMax;
+                if (testOption1 === false && testOption2 === false) {
                     return false;
                 }
-                return this.realToday.getEpochDays() - testOption < testDate.getEpochDays();
-            },
-            maxDays: function(testDate) {
-                var testOption = this.options.maxDays;
-                if (testOption === false) {
-                    return false;
-                }
-                return this.realToday.getEpochDays() + testOption > testDate.getEpochDays();
+                validMin = testOption1 === false ? true : this.realToday.getEpochDays() - (testOption1 + 1) < testDate.getEpochDays();
+                validMax = testOption2 === false ? true : this.realToday.getEpochDays() + (testOption2 + 1) > testDate.getEpochDays();
+                return !(validMin && validMax);
             },
             minHour: function(testDate) {
                 var testOption = this.options.minHour;
@@ -1282,7 +1278,7 @@
                 failrule: false,
                 passrule: false,
                 dateObj: testDate.copy()
-            }, badChecks = [ "blackDays", "blackDates", "blackDatesRec", "notToday", "maxYear", "minYear", "afterToday", "beforeToday", "maxDate", "minDate", "minDays", "maxDays", "minHour", "maxHour", "minTime", "maxTime" ];
+            }, badChecks = [ "blackDays", "blackDates", "blackDatesRec", "notToday", "maxYear", "minYear", "afterToday", "beforeToday", "maxDate", "minDate", "minmaxDays", "minHour", "maxHour", "minTime", "maxTime" ];
             w.realToday = new w._date();
             if (this.options.enableDates !== false) {
                 if (w._newDateCheck.whiteDate.call(w, testDate)) {
@@ -2899,7 +2895,7 @@
             if (o.usePlaceholder !== false) {
                 w.d.input.attr("placeholder", w._grabLabel(typeof o.usePlaceholder === "string" ? o.usePlaceholder : ""));
             }
-            w.wheelEvent = typeof $.event.special.mousewheel !== "undefined" ? "mousewheel" : "wheel";
+            w.wheelEvent = o.disableWheel ? "nonsenseEvent" : typeof $.event.special.mousewheel !== "undefined" ? "mousewheel" : "wheel";
             w.firstOfGrid = false;
             w.lastOfGrid = false;
             w.selectedInGrid = false;
