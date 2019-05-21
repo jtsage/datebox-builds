@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.1.1 (fomanticui)
+ * JTSage-DateBox-5.1.2 (fomanticui)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3"}
- * Date: 2019-05-20T14:54:01.049Z
+ * Date: 2019-05-21T19:58:53.828Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -1798,7 +1798,7 @@
                         return false;
                     });
                 }
-                if (o.calUsePickers === true) {
+                if (o.calUsePickers !== false) {
                     calContent = w.style_picker(w._pickRanges(date_displayMonth, date_displayYear, date_realToday.get(0), o.calYearPickRelative), o.theme_cal_Pickers, "dbCalPickMonth", "dbCalPickYear");
                     if (w.__("isRTL") === true) {
                         calContent.children().each(function(i, item) {
@@ -1873,7 +1873,7 @@
                     }
                     calCntlRow.appendTo(calContent);
                 }
-                if (o.calShowDateList === true && o.calDateList !== false) {
+                if (o.calShowDateList !== false && o.calDateList !== false) {
                     w.style_dateList(w.__("calDateListLabel"), o.calDateList, o.theme_cal_DateList, "dbCalPickList").appendTo(w.d.intHTML);
                     w.d.intHTML.on("change", "#dbCalPickList", function() {
                         var iPut = $(this).val().split("-");
@@ -2120,7 +2120,7 @@
                         return false;
                     });
                 }
-                if (o.slideUsePickers === true) {
+                if (o.slideUsePickers !== false) {
                     w.style_picker(w._pickRanges(date_displayMonth, date_displayYear, date_realToday.get(0), o.slideYearPickRelative), o.theme_slide_Pickers, "dbSlidePickMonth", "dbSlidePickYear").appendTo(w.d.intHTML);
                     w.d.intHTML.on("change", "#dbSlidePickMonth, #dbSlidePickYear", function() {
                         if (w.theDate.get(2) > 28) {
@@ -2149,7 +2149,7 @@
                     });
                 }
                 calCntlRow.appendTo(calContent);
-                if (o.slideShowDateList === true && o.slideDateList !== false) {
+                if (o.slideShowDateList !== false && o.slideDateList !== false) {
                     w.style_dateList(w.__("calDateListLabel"), o.slideDateList, o.theme_slide_DateList, "dbSlidePickList").appendTo(w.d.intHTML);
                     w.d.intHTML.on("change", "#dbSlidePickList", function() {
                         var iPut = $(this).val().split("-");
@@ -2741,7 +2741,7 @@
                     w._t({
                         method: "doset"
                     });
-                    if (o.closeTodayButton === true) {
+                    if (o.closeTodayButton !== false) {
                         w._t({
                             method: "close"
                         });
@@ -2756,7 +2756,7 @@
                     w._t({
                         method: "doset"
                     });
-                    if (o.closeTomorrowButton === true) {
+                    if (o.closeTomorrowButton !== false) {
                         w._t({
                             method: "close"
                         });
@@ -3194,10 +3194,10 @@
             w.realToday = new w._date();
             if (testDate.get(1) !== dispMonth) {
                 returnObject.inBounds = false;
-                if (o.calHighOutOfBounds === true) {
+                if (o.calHighOutOfBounds !== false) {
                     returnObject.theme = o.theme_cal_OutOfBounds;
                     done = true;
-                    if (o.calSelectedOutOfBounds === true && w._ThemeDateCK.selected.call(w, testDate)) {
+                    if (o.calSelectedOutOfBounds !== false && w._ThemeDateCK.selected.call(w, testDate)) {
                         returnObject.theme = o.theme_cal_Selected;
                     }
                 }
