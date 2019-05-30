@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.1.2 (jqm)
- * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3"}
- * Date: 2019-05-21T19:58:53.828Z
+ * JTSage-DateBox-5.1.3 (jqm)
+ * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3","noframe":"0.0.1"}
+ * Date: 2019-05-30T19:08:01.724Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -356,7 +356,7 @@
             }
         },
         style_mainHead: function(text, themeBar, themeButton) {
-            return "<div class='ui-header ui-bar-" + themeBar + "'>" + "<h1 class='ui-title'>" + text + "</h5>" + this.style_btn([ themeButton[0], themeButton[1] + " dbCloser ui-btn-right" ]) + "</div>";
+            return "<div class='ui-header ui-bar-" + themeBar + "'>" + "<h1 class='ui-title'>" + text + "</h1>" + this.style_btn([ themeButton[0], themeButton[1] + " dbCloser ui-btn-right" ]) + "</div>";
         },
         style_subHead: function(text) {
             return $("<div class='dbHeader'>" + "<h3 class='center'>" + text + "</h3>" + "</div>");
@@ -364,7 +364,7 @@
         style_pnHead: function(txt, prevBtn, nextBtn, prevCtl, nextCtl) {
             var returnVal = $("<div class='ui-header' style='border:0; padding: 0 3px 8px;'>");
             $(this.style_btn([ prevBtn[0], prevBtn[1] + " ui-btn-left " + prevCtl ])).appendTo(returnVal);
-            $("<h1 class='ui-title' style='margin: 0 15%'>" + txt + "</h1>").appendTo(returnVal);
+            $("<h3 class='ui-title' style='margin: 0 15%'>" + txt + "</h3>").appendTo(returnVal);
             $(this.style_btn([ nextBtn[0], nextBtn[1] + " ui-btn-right " + nextCtl ])).appendTo(returnVal);
             return returnVal;
         },

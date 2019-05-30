@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.1.2 (foundation6)
- * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3"}
- * Date: 2019-05-21T19:58:53.828Z
+ * JTSage-DateBox-5.1.3 (foundation6)
+ * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3","noframe":"0.0.1"}
+ * Date: 2019-05-30T19:08:01.724Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
