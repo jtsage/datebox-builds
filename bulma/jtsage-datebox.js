@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.1.3 (bulma)
+ * JTSage-DateBox-5.1.4 (bulma)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3","noframe":"0.0.1"}
- * Date: 2019-05-30T19:08:01.724Z
+ * Date: 2019-06-10T16:40:38.813Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
