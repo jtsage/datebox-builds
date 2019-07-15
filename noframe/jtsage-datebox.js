@@ -1,5 +1,5 @@
 /*
- * JTSage-DateBox-5.1.5 (jqm)
+ * JTSage-DateBox-5.1.5 (noframe)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3","noframe":"0.0.1"}
  * Date: 2019-07-15T16:49:28.699Z
  * http://datebox.jtsage.dev/
@@ -12,30 +12,285 @@
  */
 
 
-if (typeof Object.assign != "function") {
-    Object.defineProperty(Object, "assign", {
-        value: function assign(target, varArgs) {
-            "use strict";
-            if (target == null) {
-                throw new TypeError("Cannot convert undefined or null to object");
+(function(factory) {
+    if (typeof define === "function" && define.amd) {
+        define([ "jquery" ], factory);
+    } else {
+        factory(jQuery);
+    }
+})(function($) {
+    if (typeof $.widget !== "undefined") {
+        return false;
+    }
+    var widgetUuid = 0, widgetSlice = Array.prototype.slice;
+    $.widget = function(name, base, prototype) {
+        var existingConstructor, constructor, basePrototype;
+        var proxiedPrototype = {};
+        var namespace = name.split(".")[0];
+        name = name.split(".")[1];
+        var fullName = namespace + "-" + name;
+        if (!prototype) {
+            prototype = base;
+            base = $.Widget;
+        }
+        if ($.isArray(prototype)) {
+            prototype = $.extend.apply(null, [ {} ].concat(prototype));
+        }
+        $.expr[":"][fullName.toLowerCase()] = function(elem) {
+            return !!$.data(elem, fullName);
+        };
+        $[namespace] = $[namespace] || {};
+        existingConstructor = $[namespace][name];
+        constructor = $[namespace][name] = function(options, element) {
+            if (!this._createWidget) {
+                return new constructor(options, element);
             }
-            var to = Object(target);
-            for (var index = 1; index < arguments.length; index++) {
-                var nextSource = arguments[index];
-                if (nextSource != null) {
-                    for (var nextKey in nextSource) {
-                        if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-                            to[nextKey] = nextSource[nextKey];
-                        }
+            if (arguments.length) {
+                this._createWidget(options, element);
+            }
+        };
+        $.extend(constructor, existingConstructor, {
+            version: prototype.version,
+            _proto: $.extend({}, prototype),
+            _childConstructors: []
+        });
+        basePrototype = new base();
+        basePrototype.options = $.widget.extend({}, basePrototype.options);
+        $.each(prototype, function(prop, value) {
+            if (typeof value !== "function") {
+                proxiedPrototype[prop] = value;
+                return;
+            }
+            proxiedPrototype[prop] = function() {
+                function _super() {
+                    return base.prototype[prop].apply(this, arguments);
+                }
+                function _superApply(args) {
+                    return base.prototype[prop].apply(this, args);
+                }
+                return function() {
+                    var __super = this._super;
+                    var __superApply = this._superApply;
+                    var returnValue;
+                    this._super = _super;
+                    this._superApply = _superApply;
+                    returnValue = value.apply(this, arguments);
+                    this._super = __super;
+                    this._superApply = __superApply;
+                    return returnValue;
+                };
+            }();
+        });
+        constructor.prototype = $.widget.extend(basePrototype, {
+            widgetEventPrefix: existingConstructor ? basePrototype.widgetEventPrefix || name : name
+        }, proxiedPrototype, {
+            constructor: constructor,
+            namespace: namespace,
+            widgetName: name,
+            widgetFullName: fullName
+        });
+        if (existingConstructor) {
+            $.each(existingConstructor._childConstructors, function(i, child) {
+                var childPrototype = child.prototype;
+                $.widget(childPrototype.namespace + "." + childPrototype.widgetName, constructor, child._proto);
+            });
+            delete existingConstructor._childConstructors;
+        } else {
+            base._childConstructors.push(constructor);
+        }
+        $.widget.bridge(name, constructor);
+        return constructor;
+    };
+    $.widget.extend = function(target) {
+        var input = widgetSlice.call(arguments, 1);
+        var inputIndex = 0;
+        var inputLength = input.length;
+        var key;
+        var value;
+        for (;inputIndex < inputLength; inputIndex++) {
+            for (key in input[inputIndex]) {
+                value = input[inputIndex][key];
+                if (input[inputIndex].hasOwnProperty(key) && value !== undefined) {
+                    if ($.isPlainObject(value)) {
+                        target[key] = $.isPlainObject(target[key]) ? $.widget.extend({}, target[key], value) : $.widget.extend({}, value);
+                    } else {
+                        target[key] = value;
                     }
                 }
             }
-            return to;
+        }
+        return target;
+    };
+    $.widget.bridge = function(name, object) {
+        var fullName = object.prototype.widgetFullName || name;
+        $.fn[name] = function(options) {
+            var isMethodCall = typeof options === "string";
+            var args = widgetSlice.call(arguments, 1);
+            var returnValue = this;
+            if (isMethodCall) {
+                if (!this.length && options === "instance") {
+                    returnValue = undefined;
+                } else {
+                    this.each(function() {
+                        var methodValue;
+                        var instance = $.data(this, fullName);
+                        if (options === "instance") {
+                            returnValue = instance;
+                            return false;
+                        }
+                        if (!instance) {
+                            return false;
+                        }
+                        if (typeof instance[options] !== "function" || options.charAt(0) === "_") {
+                            return false;
+                        }
+                        methodValue = instance[options].apply(instance, args);
+                        if (methodValue !== instance && methodValue !== undefined) {
+                            returnValue = methodValue && methodValue.jquery ? returnValue.pushStack(methodValue.get()) : methodValue;
+                            return false;
+                        }
+                    });
+                }
+            } else {
+                if (args.length) {
+                    options = $.widget.extend.apply(null, [ options ].concat(args));
+                }
+                this.each(function() {
+                    var instance = $.data(this, fullName);
+                    if (instance) {
+                        instance.option(options || {});
+                        if (instance._init) {
+                            instance._init();
+                        }
+                    } else {
+                        $.data(this, fullName, new object(options, this));
+                    }
+                });
+            }
+            return returnValue;
+        };
+    };
+    $.Widget = function() {};
+    $.Widget._childConstructors = [];
+    $.Widget.prototype = {
+        widgetName: "widget",
+        widgetEventPrefix: "",
+        defaultElement: "<div>",
+        options: {
+            classes: {},
+            disabled: false,
+            create: null
         },
-        writable: true,
-        configurable: true
-    });
-}
+        _createWidget: function(options, element) {
+            element = $(element || this.defaultElement || this)[0];
+            this.element = $(element);
+            this.uuid = widgetUuid++;
+            this.eventNamespace = "." + this.widgetName + this.uuid;
+            this.bindings = $();
+            this.hoverable = $();
+            this.focusable = $();
+            this.classesElementLookup = {};
+            if (element !== this) {
+                $.data(element, this.widgetFullName, this);
+                this.document = $(element.style ? element.ownerDocument : element.document || element);
+                this.window = $(this.document[0].defaultView || this.document[0].parentWindow);
+            }
+            this.options = $.widget.extend({}, this.options, this._getCreateOptions(), options);
+            this._create();
+            this._trigger("create", null, this._getCreateEventData());
+            this._init();
+        },
+        _getCreateOptions: function() {
+            return {};
+        },
+        _getCreateEventData: $.noop,
+        _create: $.noop,
+        _init: $.noop,
+        destroy: function() {
+            this._destroy();
+            this.element.off(this.eventNamespace).removeData(this.widgetFullName);
+            this.widget().off(this.eventNamespace).removeAttr("aria-disabled");
+            this.bindings.off(this.eventNamespace);
+        },
+        _destroy: $.noop,
+        widget: function() {
+            return this.element;
+        },
+        option: function(key, value) {
+            var options = key;
+            var parts;
+            var curOption;
+            var i;
+            if (arguments.length === 0) {
+                return $.widget.extend({}, this.options);
+            }
+            if (typeof key === "string") {
+                options = {};
+                parts = key.split(".");
+                key = parts.shift();
+                if (parts.length) {
+                    curOption = options[key] = $.widget.extend({}, this.options[key]);
+                    for (i = 0; i < parts.length - 1; i++) {
+                        curOption[parts[i]] = curOption[parts[i]] || {};
+                        curOption = curOption[parts[i]];
+                    }
+                    key = parts.pop();
+                    if (arguments.length === 1) {
+                        return curOption[key] === undefined ? null : curOption[key];
+                    }
+                    curOption[key] = value;
+                } else {
+                    if (arguments.length === 1) {
+                        return this.options[key] === undefined ? null : this.options[key];
+                    }
+                    options[key] = value;
+                }
+            }
+            this._setOptions(options);
+            return this;
+        },
+        _setOptions: function(options) {
+            var key;
+            for (key in options) {
+                this._setOption(key, options[key]);
+            }
+            return this;
+        },
+        _setOption: function(key, value) {
+            this.options[key] = value;
+            return this;
+        },
+        enable: function() {
+            return this._setOptions({
+                disabled: false
+            });
+        },
+        disable: function() {
+            return this._setOptions({
+                disabled: true
+            });
+        },
+        _trigger: function(type, event, data) {
+            var prop, orig;
+            var callback = this.options[type];
+            data = data || {};
+            event = $.Event(event);
+            event.type = (type === this.widgetEventPrefix ? type : this.widgetEventPrefix + type).toLowerCase();
+            event.target = this.element[0];
+            orig = event.originalEvent;
+            if (orig) {
+                for (prop in orig) {
+                    if (!(prop in event)) {
+                        event[prop] = orig[prop];
+                    }
+                }
+            }
+            this.element.trigger(event, data);
+            return !(typeof callback === "function" && callback.apply(this.element[0], [ event ].concat(data)) === false || event.isDefaultPrevented());
+        }
+    };
+    var widget = $.widget;
+});
 
 (function($) {
     $.widget("jtsage.datebox", {
@@ -49,7 +304,7 @@ if (typeof Object.assign != "function") {
             controlWidthImp: "",
             breakpointWidth: "567px",
             zindex: "1100",
-            clickEvent: "vclick",
+            clickEvent: "click",
             disableWheel: false,
             useKinetic: true,
             flipSizeOverride: false,
@@ -111,7 +366,7 @@ if (typeof Object.assign != "function") {
             minuteStep: 1,
             minuteStepRound: 0,
             twoDigitYearCutoff: 38,
-            flipboxLensAdjust: false,
+            flipboxLensAdjust: 9,
             rolloverMode: {
                 m: true,
                 d: true,
@@ -159,49 +414,49 @@ if (typeof Object.assign != "function") {
                     calHeaderFormat: "%B %Y"
                 }
             },
-            theme_clearBtn: [ "recycle", "a" ],
-            theme_closeBtn: [ "check", "a" ],
-            theme_cancelBtn: [ "delete", "a" ],
-            theme_tomorrowBtn: [ "action", "a" ],
-            theme_todayBtn: [ "action", "a" ],
-            theme_dropdownContainer: "ui-body-a",
-            theme_modalContainer: "ui-body-a",
-            theme_inlineContainer: "ui-body-a",
-            theme_headerTheme: "inherit",
-            theme_headerBtn: [ "delete", "a" ],
-            theme_openButton: false,
-            theme_cal_Today: "b",
-            theme_cal_DayHigh: "b",
-            theme_cal_Selected: "active",
-            theme_cal_DateHigh: "b",
-            theme_cal_DateHighAlt: "b",
-            theme_cal_DateHighRec: "b",
-            theme_cal_Default: "a",
-            theme_cal_OutOfBounds: "a",
-            theme_cal_NextBtn: [ "plus", "a" ],
-            theme_cal_PrevBtn: [ "minus", "a" ],
-            theme_cal_Pickers: "a",
-            theme_cal_DateList: "a",
-            theme_dbox_NextBtn: [ "plus", "a" ],
-            theme_dbox_PrevBtn: [ "minus", "a" ],
-            theme_dbox_Inputs: "inherit",
-            theme_fbox_Selected: "a ui-flipswitch-active",
-            theme_fbox_Default: "a",
-            theme_fbox_Forbidden: "a ui-disabled",
+            theme_clearBtn: [ "clear", "" ],
+            theme_closeBtn: [ "check", "" ],
+            theme_cancelBtn: [ "cancel", "" ],
+            theme_tomorrowBtn: [ "goto", "" ],
+            theme_todayBtn: [ "goto", "" ],
+            theme_dropdownContainer: "",
+            theme_modalContainer: "",
+            theme_inlineContainer: "",
+            theme_headerTheme: "",
+            theme_headerBtn: [ "cancel", "" ],
+            theme_openButton: "",
+            theme_cal_Today: "",
+            theme_cal_DayHigh: "",
+            theme_cal_Selected: "",
+            theme_cal_DateHigh: "",
+            theme_cal_DateHighAlt: "",
+            theme_cal_DateHighRec: "",
+            theme_cal_Default: "",
+            theme_cal_OutOfBounds: "",
+            theme_cal_NextBtn: [ "next", "" ],
+            theme_cal_PrevBtn: [ "prev", "" ],
+            theme_cal_Pickers: "",
+            theme_cal_DateList: "",
+            theme_dbox_NextBtn: [ "plus", "" ],
+            theme_dbox_PrevBtn: [ "minus", "" ],
+            theme_dbox_Inputs: "",
+            theme_fbox_Selected: "",
+            theme_fbox_Default: "",
+            theme_fbox_Forbidden: "",
             theme_fbox_RollHeight: "135px",
-            theme_slide_Today: "b",
-            theme_slide_DayHigh: "b",
-            theme_slide_Selected: "active",
-            theme_slide_DateHigh: "b",
-            theme_slide_DateHighAlt: "b",
-            theme_slide_DateHighRec: "b",
-            theme_slide_Default: "a",
-            theme_slide_NextBtn: [ "plus", "a" ],
-            theme_slide_PrevBtn: [ "minus", "a" ],
-            theme_slide_NextDateBtn: [ "carat-r", "a" ],
-            theme_slide_PrevDateBtn: [ "carat-l", "a" ],
-            theme_slide_Pickers: "a",
-            theme_slide_DateList: "a",
+            theme_slide_Today: "",
+            theme_slide_DayHigh: "",
+            theme_slide_Selected: "",
+            theme_slide_DateHigh: "",
+            theme_slide_DateHighAlt: "",
+            theme_slide_DateHighRec: "",
+            theme_slide_Default: "",
+            theme_slide_NextBtn: [ "plus", "" ],
+            theme_slide_PrevBtn: [ "minus", "" ],
+            theme_slide_NextDateBtn: [ "next", "" ],
+            theme_slide_PrevDateBtn: [ "prev", "" ],
+            theme_slide_Pickers: "",
+            theme_slide_DateList: "",
             theme_backgroundMask: {
                 position: "fixed",
                 left: 0,
@@ -210,11 +465,11 @@ if (typeof Object.assign != "function") {
                 bottom: 0,
                 backgroundColor: "rgba(0,0,0,.4)"
             },
-            theme_headStyle: " .center { text-align: center !important; } .p0 { padding: 0 !important; }.m0 { margin: 0 !important; } .w-100 { width: 100% !important; }",
+            theme_headStyle: "",
             theme_spanStyle: false,
             buttonIconDate: "calendar",
             buttonIconTime: "clock",
-            disabledState: "ui-disabled",
+            disabledState: "disabled",
             tranDone: "webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend",
             calHighToday: true,
             calHighPick: true,
@@ -325,17 +580,9 @@ if (typeof Object.assign != "function") {
                 return hardAttachPoint;
             }
             if (!isInline) {
-                possibleAttach = $(".ui-page-active");
-                if (possibleAttach.length === 1) {
-                    return possibleAttach;
-                }
-                possibleAttach = w.d.input.closest("[data-role='page']");
-                if (possibleAttach.length === 1) {
-                    return possibleAttach;
-                }
                 return $("body");
             }
-            if (possibleAttach.hasClass("ui-field-contain")) {
+            if (possibleAttach.hasClass("form-group")) {
                 return possibleAttach;
             } else {
                 return w.d.wrap;
@@ -344,174 +591,153 @@ if (typeof Object.assign != "function") {
         style_btn: function(theme, contents) {
             var retty;
             contents = typeof contents === "undefined" ? "" : contents;
-            retty = "<a href='#' role='button' class='ui-btn ui-mini ui-btn-" + theme[1] + "";
-            retty += theme[0] !== false ? " ui-icon-" + theme[0] : "";
-            retty += contents === "" ? " ui-corner-all ui-btn-icon-notext" : " ui-btn-icon-left";
-            retty += "'>" + contents + "</a>";
+            retty = "<a href='#' role='button' class='" + theme[1] + "'>";
+            retty += theme[0] !== false ? "<span style='top: 3px; display: inline-block; position: relative;'>" + this.icons.getIcon.call(this, theme[0]) + "</span> " : "";
+            retty += contents + "</a>";
             return retty;
         },
         style_btnGrp: function(collapse) {
-            var style = collapse ? "margin: 0 auto;" : "margin: 0 .446em";
-            return $("<div style='" + style + "' class='ui-controlgroup-controls'>");
+            var cls = collapse === true ? "" : "";
+            return $("<div style='padding: 5px;' class='" + cls + "'>");
         },
-        style_btnGrpOut: function(collapse, inner) {
-            var cls = collapse === true ? "ui-controlgroup-horizontal" : "ui-controlgroup-vertical", style = collapse === true ? "style='text-align:center'" : "";
-            inner.find(".ui-btn").last().addClass("ui-last-child");
-            inner.find(".ui-btn").first().addClass("ui-first-child");
-            return $("<div " + style + " class='ui-controlgroup " + cls + "'>").append(inner);
-        },
-        style_inWrap: function(originalInput) {
-            originalInput.parent().enhanceWithin();
-            return originalInput.parent().addClass("ui-input-has-clear");
+        style_inWrap: function(originalInput, theme) {
+            originalInput.css({
+                display: "inline"
+            });
+            return originalInput.wrap("<div style='display:inline-block' class='" + theme + "'>").parent();
         },
         style_inBtn: function(icon, title) {
-            return "<a href='javascript: return false;' " + "class='dbOpenButton ui-input-clear ui-btn ui-icon-" + icon + " ui-btn-icon-notext ui-corner-all' " + "title='" + title + "'>" + title + "</a>";
+            return "<div style='display:inline' class='dbOpenButton' title='" + title + "'>" + "<span>" + this.icons.getIcon.call(this, icon) + "</span>" + "</div>";
         },
         style_inNoBtn: function(originalInputWrap) {
-            originalInputWrap.parent().removeClass("ui-has-clear");
+            return true;
         },
         style_inHide: function() {
             var w = this, hideMe = w.d.wrap.parent();
-            if (hideMe.hasClass("ui-field-contain")) {
+            if (hideMe.hasClass("form-group")) {
                 hideMe.hide();
             } else {
                 w.d.wrap.hide();
             }
         },
         style_mainHead: function(text, themeBar, themeButton) {
-            return "<div class='ui-header ui-bar-" + themeBar + "'>" + "<h1 class='ui-title'>" + text + "</h1>" + this.style_btn([ themeButton[0], themeButton[1] + " dbCloser ui-btn-right" ]) + "</div>";
+            return "<div class='" + themeBar + "'>" + text + "<a href='#' class='dbCloser'><span>" + this.icons.getIcon.call(this, themeButton[0]) + "</span></a></div>";
         },
         style_subHead: function(text) {
-            return $("<div class='dbHeader'>" + "<h3 class='center'>" + text + "</h3>" + "</div>");
+            return $("<div class='dbHeader'>" + "<h4>" + text + "</h4>" + "</div>");
         },
         style_pnHead: function(txt, prevBtn, nextBtn, prevCtl, nextCtl) {
-            var returnVal = $("<div class='ui-header' style='border:0; padding: 0 3px 8px;'>");
-            $(this.style_btn([ prevBtn[0], prevBtn[1] + " ui-btn-left " + prevCtl ])).appendTo(returnVal);
-            $("<h3 class='ui-title' style='margin: 0 15%'>" + txt + "</h3>").appendTo(returnVal);
-            $(this.style_btn([ nextBtn[0], nextBtn[1] + " ui-btn-right " + nextCtl ])).appendTo(returnVal);
+            var returnVal = $("<div>");
+            $(this.style_btn([ prevBtn[0], prevBtn[1] + " " + prevCtl ])).appendTo(returnVal);
+            $("<h4 style='display:inline'>" + txt + "</h4>").appendTo(returnVal);
+            $(this.style_btn([ nextBtn[0], nextBtn[1] + " " + nextCtl ])).appendTo(returnVal);
             return returnVal;
         },
         style_picker: function(ranges, theme, monthCtl, yearCtl) {
-            var i = 0, returnVal = "<div style='padding-bottom: 8px' class='" + "ui-controlgroup ui-controlgroup-horizontal ui-corner-all ui-mini'>";
-            returnVal += "<div class='ui-controlgroup-controls w-100'>";
-            returnVal += "<div class='ui-select' style='width:60%'>";
-            returnVal += "<div id='" + monthCtl + "-button' class='ui-btn-" + theme + " ui-btn ui-icon-carat-d ui-btn-icon-right ui-corner-all ui-shadow ui-first-child'>";
-            for (i = 0; i < ranges.month.length; i++) {
-                if (ranges.month[i][2] === true) {
-                    returnVal += "<span>" + ranges.month[i][1] + "</span>";
-                }
-            }
-            returnVal += this._stdSel(ranges.month, monthCtl, "");
-            returnVal += "</div></div>";
-            returnVal += "<div class='ui-select' style='width:40%'>";
-            returnVal += "<div id='" + yearCtl + "-button' class='ui-btn-" + theme + " ui-btn ui-icon-carat-d ui-btn-icon-right ui-corner-all ui-shadow ui-last-child'>";
-            for (i = 0; i < ranges.year.length; i++) {
-                if (ranges.year[i][2] === true) {
-                    returnVal += "<span>" + ranges.year[i][1] + "</span>";
-                }
-            }
-            returnVal += this._stdSel(ranges.year, yearCtl, "");
-            returnVal += "</div></div>";
-            returnVal += "</div></div>";
+            var returnVal = "";
+            returnVal += "<div>";
+            returnVal += "<div style='padding:0; margin:0; display:inline;'>";
+            returnVal += this._stdSel(ranges.month, monthCtl, theme);
+            returnVal += "</div>";
+            returnVal += "<div style='padding:0; margin:0; display:inline;'>";
+            returnVal += this._stdSel(ranges.year, yearCtl, theme);
+            returnVal += "</div>";
+            returnVal += "</div>";
             return $(returnVal);
         },
         style_dateList: function(listLabel, list, theme, ctlCls) {
             var returnVal = "", newList = list.slice();
             newList.unshift([ false, listLabel, true ]);
-            returnVal += "<div class='ui-select'>";
-            returnVal += "<div id='" + ctlCls + "-button' style='margin: 0 .446em 8px;' class='" + "ui-mini ui-btn ui-icon-carat-d ui-btn-" + theme + " ui-btn-icon-right ui-corner-all'>";
-            returnVal += "<span>" + listLabel + "</span>";
-            returnVal += this._stdSel(newList, ctlCls, "");
-            returnVal += "</div></div>";
+            returnVal += "<div>";
+            returnVal += this._stdSel(newList, ctlCls, theme);
+            returnVal += "</div>";
             return $(returnVal);
         },
         style_calGrid: function() {
-            return $("<div><table class='dbCalGrid w-100'></table></div>");
+            return $("<div>" + "<table class='dbCalGrid'>" + "</table></div>");
         },
         style_calRow: function() {
             return $("<tr>");
         },
         style_calBtn: function(data, totalElements) {
-            var styles_TD = "width:" + 100 / totalElements + "%", styles_A = [ "padding-right:0", "padding-left:0" ], class_A = [ "dbEvent", "ui-btn", "ui-mini", "m0", "ui-btn-" + data.theme, data.bad ? "ui-disabled" : "" ], disable = data.bad ? "disabled='disabled'" : "";
-            return $("<td class='p0 m0' style='" + styles_TD + "'>" + "<a style='" + styles_A.join(";") + "' class='" + class_A.join(" ") + "' href='#' " + disable + ">" + data.displayText + "</a></td>");
+            var style = totalElements !== undefined ? " style='width: " + 100 / totalElements + "%'" : "", disable = data.bad ? "disabled='disabled'" : "", cls = "class='dbEvent " + data.theme + (data.bad ? " disabled" : "") + "'";
+            return $("<td " + style + ">" + "<a href='#' " + cls + " " + disable + ">" + data.displayText + "</a>" + "</td>");
         },
         style_calTxt: function(text, header, totalElements) {
-            var styles = [ "width:" + 100 / totalElements + "%", header ? "font-weight:bold" : "" ];
-            return $("<td class='p0 m0 center' style='" + styles.join(";") + "'>" + text + "</td>");
+            var style = totalElements !== undefined ? " style='width: " + 100 / totalElements + "%'" : "";
+            return $("<td " + style + ">" + text + "</td>");
         },
         style_dboxCtr: function() {
-            return $("<table class='w-100'>");
+            return $("<table style='width:100%'>");
         },
         style_dboxRow: function() {
             return $("<tr>");
         },
-        style_dboxCtrl: function(prevBtn, nextBtn, mainCls, label, inTheme) {
+        style_dboxCtrl: function(prevBtn, nextBtn, mainCls, label) {
             var returnVal = "";
-            returnVal += "<td class='dbBox" + mainCls + "'>";
-            returnVal += "<a href='#' role='button' class='ui-corner-all ui-btn ui-mini ui-btn-";
-            returnVal += nextBtn[1] + " ui-icon-" + nextBtn[0] + " ui-btn-icon-top dbBoxNext m0' ";
-            returnVal += "style='padding-top:2.1em; border-bottom-left-radius:0;" + "border-bottom-right-radius:0;'>";
-            returnVal += "</a>";
+            returnVal += "<td><div class='dbBox" + mainCls + "'>";
+            returnVal += this.style_btn([ nextBtn[0], nextBtn[1] + " dbBoxNext" ]);
             if (label !== null) {
-                returnVal += "<div class='m0 center ui-input-text ui-body-inherit' " + "style='height:auto; padding: .3em 0;'>" + label + "</div>";
+                returnVal += "<div class='' " + "style='height:auto'>" + label + "</div>";
             }
-            returnVal += "<div class='m0 ui-input-text ui-mini ui-body-" + inTheme + "'>";
-            returnVal += "<input class='p0 center' type='text'></div>";
-            returnVal += "<a href='#' role='button' class='ui-corner-all ui-btn ui-mini ui-btn-";
-            returnVal += prevBtn[1] + " ui-icon-" + prevBtn[0] + " ui-btn-icon-top dbBoxPrev m0' ";
-            returnVal += "style='padding-top:2.1em; border-top-left-radius:0;" + "border-top-right-radius:0;'>";
-            returnVal += "</a>";
-            returnVal += "</div>";
+            returnVal += "<input type='text' ";
+            returnVal += "class='' ";
+            returnVal += "style='width:100%'>";
+            returnVal += this.style_btn([ prevBtn[0], prevBtn[1] + " dbBoxPrev" ]);
+            returnVal += "</div></td>";
             return $(returnVal);
         },
         style_slideGrid: function() {
-            return $("<div><table class='dbSlideGrid w-100'></table></div>");
+            return $("<div>" + "<table style='width:100%' class='dbSlideGrid'>" + "</table></div>");
         },
         style_slideRow: function() {
             return $("<tr>");
         },
         style_slideBtn: function(data) {
-            var style = " style='width: " + 100 / 8 + "%'", disable = data.bad ? "disabled='disabled'" : "", cls = "class='m0 dbEventS w-100 ui-btn ui-mini ui-btn-" + data.theme + (data.bad ? " disabled" : "") + "'";
-            return $("<td class='m-0 p-0 text-center'" + style + ">" + "<a style='padding:.7em 0;' href='#' " + cls + " " + disable + ">" + "<small>" + this.__("daysOfWeekShort")[data.dateObj.getDay()] + "</small><br>" + data.dateObj.getDate() + "</a>" + "</td>");
+            var style = " style='width: " + 100 / 8 + "%'", disable = data.bad ? "disabled='disabled'" : "", cls = "class='dbEventS " + data.theme + (data.bad ? " disabled" : "") + "'";
+            return $("<td " + style + ">" + "<a href='#' " + cls + " " + disable + ">" + "<small>" + this.__("daysOfWeekShort")[data.dateObj.getDay()] + "</small><br>" + data.dateObj.getDate() + "</a>" + "</td>");
         },
         style_slideCtrl: function(eventCls, theme) {
-            var style = " style='width: " + 100 / 8 / 2 + "%'", cls = "class='m0 ui-corner-all ui-btn ui-mini ui-btn-icon-notext ui-btn-" + theme[1] + " " + eventCls + " ui-icon-" + theme[0] + "'";
-            return $("<td " + style + ">" + "<a href='#' " + cls + "></a></td>");
+            var style = " style='width: " + 100 / 8 / 2 + "%'", cls = "class='" + theme[1] + " " + eventCls + "'";
+            return $("<td" + style + ">" + "<a href='#' " + cls + ">" + this.icons.getIcon.call(this, theme[0]) + "</a></td>");
         },
         style_fboxCtr: function(size) {
-            return $("<div style='margin: 0 5px 8px; height: " + size + "; overflow: hidden'>");
+            return $("<div style='height: " + size + "; overflow: hidden; padding: 5px;'>");
         },
         style_fboxDurLbls: function() {
-            return $("<div style='margin: 5px;'>");
+            return $("<div style='padding: 0 5px;'>");
         },
         style_fboxDurLbl: function(text, items) {
-            return $("<div class='center' " + "style='display:inline-block; width: " + 100 / items + "%'>" + text + "</div>");
+            return $("<div style='display: inline-block; width: " + 100 / items + "%'>" + text + "</div>");
         },
-        style_fboxRollCtr: function(total) {
-            return $("<div style='float:left; width:" + 100 / total + "%'>");
+        style_fboxRollCtr: function(items) {
+            return $("<div style='float: left; width: " + 100 / items + "%'>");
         },
         style_fboxRollPrt: function() {
-            return $("<ul style='list-style-type: none; display: inline;'>");
+            return $("<ul>");
         },
         style_fboxRollCld: function(text, cls) {
-            return $("<li style='height: 30px; line-height: 30px;' class='center ui-body-" + cls + "'>" + text + "</li>");
+            return $("<li class='" + cls + "'" + " style='padding: 10px 0;'>" + text + "</li>");
         },
         style_fboxLens: function() {
-            return $("<div style='width: 96%; height: 40px; border: 1px solid #eee; margin: 0 1.5%;' " + "class='ui-overlay-shadow'>");
+            return $("<div style='margin: 0px 2px; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); " + "border: 1px solid black; height: 35px;'>");
         },
         style_fboxPos: function() {
-            var fullRoller, firstItem, height_Roller, intended_Top, w = this, o = this.options, height_Outside = w.d.intHTML.find(".dbRollerV").outerHeight(), theLens = w.d.intHTML.find(".dbLens").first(), height_Lens = theLens.outerHeight();
+            var fullRoller, firstItem, height_Roller, intended_Top, w = this, o = this.options, height_Outside = w.d.intHTML.find(".dbRollerV").outerHeight(true), height_Container = w.d.intHTML.find(".dbRollerV").height(), theLens = w.d.intHTML.find(".dbLens").first(), height_Lens = theLens.outerHeight();
+            if (height_Container < 1) {
+                return true;
+            }
             intended_Top = -1 * (height_Outside / 2 + height_Lens / 2);
             theLens.css({
-                top: intended_Top + -3,
+                top: intended_Top,
                 marginBottom: -1 * height_Lens
             });
             w.d.intHTML.find(".dbRoller").each(function() {
                 fullRoller = $(this);
                 firstItem = fullRoller.children().first();
+                height_Roller = fullRoller.outerHeight(true);
                 if (firstItem.css("marginTop") === "0px") {
-                    height_Roller = (fullRoller.children().length + 1) * firstItem.outerHeight();
-                    intended_Top = -1 * (height_Roller / 2) + height_Outside / 2;
+                    intended_Top = -1 * (height_Roller / 2) + height_Container / 2;
                     if (o.flipboxLensAdjust !== false) {
                         intended_Top += o.flipboxLensAdjust;
                     }

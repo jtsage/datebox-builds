@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.1.4 (bootstrap)
+ * JTSage-DateBox-5.1.5 (bootstrap)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3","noframe":"0.0.1"}
- * Date: 2019-06-10T16:40:38.813Z
+ * Date: 2019-07-15T16:49:28.699Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -1403,7 +1403,7 @@
             if (typeof extd === "undefined") {
                 extd = false;
             }
-            str = (w.__("useArabicIndic") === true && typeof str !== "undefined" ? w._dRep(str, -1) : str).trim();
+            str = typeof str === "undefined" ? "" : (w.__("useArabicIndic") === true ? w._dRep(str, -1) : str).trim();
             if (typeof o.mode === "undefined") {
                 return date;
             }
@@ -1524,13 +1524,19 @@
                         break;
 
                       case "string":
-                        if (o.mode.substr(0, 4) === "time") {
-                            exp_temp = Object.assign([ 0, 0, 0 ], defVal.split(":", 3));
-                            date = w._pa(exp_temp, date);
+                        if (defVal.substr(0, 1) === "+") {
+                            date = new w._date().adj(5, parseInt(defVal.substr(1), 10));
+                        } else if (defVal.substr(0, 1) === "-") {
+                            date = new w._date().adj(5, -1 * parseInt(defVal.substr(1), 10));
                         } else {
-                            exp_temp = Object.assign([ 0, 0, 0 ], defVal.split("-", 3));
-                            exp_temp[1]--;
-                            date = w._pa(exp_temp, false);
+                            if (o.mode.substr(0, 4) === "time") {
+                                exp_temp = Object.assign([ 0, 0, 0 ], defVal.split(":", 3));
+                                date = w._pa(exp_temp, date);
+                            } else {
+                                exp_temp = Object.assign([ 0, 0, 0 ], defVal.split("-", 3));
+                                exp_temp[1]--;
+                                date = w._pa(exp_temp, false);
+                            }
                         }
                         break;
                     }

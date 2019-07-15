@@ -1,11 +1,8 @@
 {
-  "name": "jtsage-datebox-bulma",
-  "title": "JTSage DateBox (Bulma)",
-  "description": "Plugin to provide a framework agnostic Date and Time Picker (Bulma)",
+  "name": "jtsage-datebox-noframe",
+  "title": "JTSage DateBox (No Framework)",
+  "description": "Plugin to provide a framework agnostic Date and Time Picker (Frameworkless Version)",
   "version": "5.1.5",
-  "supports": {
-    "bulma": "0.7.4"
-  },
   "homepage": "http://datebox.jtsage.dev/",
   "author": {
     "name": "JTSage and other contributors",
