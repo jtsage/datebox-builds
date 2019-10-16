@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.1.5 (bootstrap4)
+ * JTSage-DateBox-5.1.6 (bootstrap4)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3","noframe":"0.0.1"}
- * Date: 2019-07-15T16:49:28.699Z
+ * Date: 2019-10-16T14:15:48.452Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -1290,7 +1290,7 @@
             return returnObject;
         },
         _getCleanDur: function() {
-            var w = this, o = this, thisDuration = w.theDate.getEpoch() - w.initDate.getEpoch();
+            var w = this, o = this.options, thisDuration = w.theDate.getEpoch() - w.initDate.getEpoch();
             if (thisDuration < 0) {
                 thisDuration = 0;
                 w.theDate = w.initDate.copy();
