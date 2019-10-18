@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.1.6 (noframe)
+ * JTSage-DateBox-5.2.0 (noframe)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3","noframe":"0.0.1"}
- * Date: 2019-10-16T14:15:48.452Z
+ * Date: 2019-10-18T19:35:01.481Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -332,6 +332,9 @@
             useClearButton: false,
             useCollapsedBut: false,
             usePlaceholder: false,
+            headerFollowsPlaceholder: true,
+            headerFollowsTitle: true,
+            headerFollowsLabel: true,
             beforeOpenCallback: false,
             beforeOpenCallbackArgs: [],
             openCallback: false,
@@ -1897,6 +1900,11 @@
                             value: w._formatter(w.__fmt(), w.theDate),
                             date: w.theDate
                         });
+                        if (o.displayMode === "inline") {
+                            w._t({
+                                method: "dorefresh"
+                            });
+                        }
                         w._t({
                             method: "close"
                         });
@@ -2598,19 +2606,30 @@
         _btwn: function(value, low, high) {
             return value > low && value < high;
         },
-        _grabLabel: function(deflt) {
+        _grabLabel: function(deflt, isPlaceholder) {
             var inputPlaceholder, inputTitle, w = this, o = this.options, tmp = false;
+            if (typeof isPlaceholder === "undefined") {
+                isPlaceholder = false;
+            }
             if (typeof o.overrideDialogLabel === "undefined") {
                 inputPlaceholder = w.d.input.attr("placeholder");
                 inputTitle = w.d.input.attr("title");
                 if (typeof inputPlaceholder !== "undefined") {
-                    return inputPlaceholder;
+                    if (isPlaceholder || o.headerFollowsPlaceholder) {
+                        return inputPlaceholder;
+                    }
                 }
                 if (typeof inputTitle !== "undefined") {
-                    return inputTitle;
+                    if (isPlaceholder || o.headerFollowsTitle) {
+                        return inputTitle;
+                    }
                 }
                 tmp = $(document).find("label[for='" + w.d.input.attr("id") + "']").text();
-                return tmp === "" ? deflt : tmp;
+                if (isPlaceholder || o.headerFollowsLabel) {
+                    return tmp === "" ? deflt : tmp;
+                } else {
+                    return deflt;
+                }
             }
             return o.overrideDialogLabel;
         },
@@ -2743,9 +2762,12 @@
                     e.preventDefault();
                     w.theDate = w._pa([ 0, 0, 0 ], new w._date());
                     w._t({
-                        method: "doset"
+                        method: "dorefresh"
                     });
                     if (o.closeTodayButton !== false) {
+                        w._t({
+                            method: "doset"
+                        });
                         w._t({
                             method: "close"
                         });
@@ -2758,9 +2780,12 @@
                     e.preventDefault();
                     w.theDate = w._pa([ 0, 0, 0 ], new w._date()).adj(2, 1);
                     w._t({
-                        method: "doset"
+                        method: "dorefresh"
                     });
                     if (o.closeTomorrowButton !== false) {
+                        w._t({
+                            method: "doset"
+                        });
                         w._t({
                             method: "close"
                         });
@@ -2878,7 +2903,7 @@
             w.drag = drag;
             w.icons = this.icons;
             if (o.usePlaceholder !== false) {
-                w.d.input.attr("placeholder", w._grabLabel(typeof o.usePlaceholder === "string" ? o.usePlaceholder : ""));
+                w.d.input.attr("placeholder", typeof o.usePlaceholder === "string" ? o.usePlaceholder : w._grabLabel("", true));
             }
             w.wheelEvent = o.disableWheel ? "nonsenseEvent" : typeof $.event.special.mousewheel !== "undefined" ? "mousewheel" : "wheel";
             w.firstOfGrid = false;
