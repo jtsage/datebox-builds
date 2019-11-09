@@ -2,7 +2,7 @@
   "name": "jtsage-datebox-fomanticui",
   "title": "JTSage DateBox (FomanticUI)",
   "description": "Plugin to provide a framework agnostic Date and Time Picker (FomanticUI Version)",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "supports": {
     "uikit": "3.0.3"
   },

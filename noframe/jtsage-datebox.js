@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.2.0 (noframe)
- * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.7.4","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.0.3","noframe":"0.0.1"}
- * Date: 2019-10-18T19:35:01.481Z
+ * JTSage-DateBox-5.2.1 (noframe)
+ * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.8.0","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.2.0","noframe":"0.0.1"}
+ * Date: 2019-11-09T23:03:33.216Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -1888,6 +1888,12 @@
                         w._t({
                             method: "doset"
                         });
+                        w._t({
+                            method: "dorefresh"
+                        });
+                        w._t({
+                            method: "close"
+                        });
                     });
                 }
                 w.d.intHTML.append(w._doBottomButtons.call(w, false));
@@ -2169,6 +2175,12 @@
                         w._t({
                             method: "doset"
                         });
+                        w._t({
+                            method: "dorefresh"
+                        });
+                        w._t({
+                            method: "close"
+                        });
                     });
                 }
                 w.d.intHTML.append(w._doBottomButtons.call(w, false));
@@ -2184,6 +2196,11 @@
                         w._t({
                             method: "close"
                         });
+                        if (o.displayMode === "inline") {
+                            w._t({
+                                method: "dorefresh"
+                            });
+                        }
                     }
                 }).on(o.clickEvent, ".dbSlideWkNext", function(e) {
                     e.preventDefault();
