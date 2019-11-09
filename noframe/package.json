@@ -2,7 +2,7 @@
   "name": "jtsage-datebox-noframe",
   "title": "JTSage DateBox (No Framework)",
   "description": "Plugin to provide a framework agnostic Date and Time Picker (Frameworkless Version)",
-  "version": "5.2.1",
+  "version": "5.3.0",
   "homepage": "http://datebox.jtsage.dev/",
   "author": {
     "name": "JTSage and other contributors",

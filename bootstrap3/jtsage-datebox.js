@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.2.1 (bootstrap)
+ * JTSage-DateBox-5.3.0 (bootstrap)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.8.0","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.2.0","noframe":"0.0.1"}
- * Date: 2019-11-09T23:03:33.216Z
+ * Date: 2019-11-09T23:05:14.114Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -493,6 +493,7 @@
             highDays: false,
             highDates: false,
             highDatesRec: false,
+            highDatesPeriod: false,
             highDatesAlt: false,
             calDateList: false,
             calShowDateList: false,
@@ -1375,6 +1376,20 @@
                     }
                 }
                 return false;
+            },
+            highDatesPeriod: function(testDate) {
+                var i, j, k, testOption = this.options.highDatesPeriod;
+                if (testOption === false) {
+                    return false;
+                }
+                i = testOption[0].split("-");
+                j = new Date(i[0], i[1] - 1, i[2], 12, 1, 1, 1);
+                k = Math.floor((testDate.getTime() - j.getTime()) / (1e3 * 3600 * 24));
+                if (k % testOption[1] === 0) {
+                    return true;
+                } else {
+                    return false;
+                }
             },
             highDays: function(testDate) {
                 var testOption = this.options.highDays;
@@ -3233,7 +3248,7 @@
             var w = this, o = this.options, itt, done = false, returnObject = {
                 theme: o.theme_cal_Default,
                 inBounds: true
-            }, dateThemes = [ [ "selected", "theme_cal_Selected" ], [ "today", "theme_cal_Today" ], [ "highDates", "theme_cal_DateHigh" ], [ "highDatesAlt", "theme_cal_DateHighAlt" ], [ "highDatesRec", "theme_cal_DateHighRec" ], [ "highDays", "theme_cal_DayHigh" ] ];
+            }, dateThemes = [ [ "selected", "theme_cal_Selected" ], [ "today", "theme_cal_Today" ], [ "highDates", "theme_cal_DateHigh" ], [ "highDatesAlt", "theme_cal_DateHighAlt" ], [ "highDatesRec", "theme_cal_DateHighRec" ], [ "highDatesPeriod", "theme_cal_DateHighRec" ], [ "highDays", "theme_cal_DayHigh" ] ];
             w.realToday = new w._date();
             if (testDate.get(1) !== dispMonth) {
                 returnObject.inBounds = false;
