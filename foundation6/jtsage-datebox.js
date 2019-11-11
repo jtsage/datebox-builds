@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.3.0 (foundation6)
+ * JTSage-DateBox-5.3.1 (foundation6)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.8.0","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.2.0","noframe":"0.0.1"}
- * Date: 2019-11-09T23:05:14.114Z
+ * Date: 2019-11-11T18:30:43.700Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -1268,6 +1268,20 @@
                     }
                 }
                 return false;
+            },
+            blackDatesPeriod: function(testDate) {
+                var i, j, k, testOption = this.options.blackDatesPeriod;
+                if (testOption === false) {
+                    return false;
+                }
+                i = testOption[0].split("-");
+                j = new Date(i[0], i[1] - 1, i[2], 12, 1, 1, 1);
+                k = Math.floor((testDate.getTime() - j.getTime()) / (1e3 * 3600 * 24));
+                if (k % testOption[1] === 0) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         },
         _newDateChecker: function(testDate) {
@@ -1277,7 +1291,7 @@
                 failrule: false,
                 passrule: false,
                 dateObj: testDate.copy()
-            }, badChecks = [ "blackDays", "blackDates", "blackDatesRec", "notToday", "maxYear", "minYear", "afterToday", "beforeToday", "maxDate", "minDate", "minmaxDays", "minHour", "maxHour", "minTime", "maxTime" ];
+            }, badChecks = [ "blackDays", "blackDates", "blackDatesRec", "blackDatesPeriod", "notToday", "maxYear", "minYear", "afterToday", "beforeToday", "maxDate", "minDate", "minmaxDays", "minHour", "maxHour", "minTime", "maxTime" ];
             w.realToday = new w._date();
             if (this.options.enableDates !== false) {
                 if (w._newDateCheck.whiteDate.call(w, testDate)) {
@@ -3362,45 +3376,62 @@
         },
         _dbox_enter: function(item) {
             var tmp, cleanVal = parseInt(item.val(), 10), w = this, t = 0;
-            if (item.data("field") === "M") {
-                tmp = w.__("monthsOfYearShort").indexOf(item.val());
-                if (tmp > -1) {
-                    w.theDate.setMonth(tmp);
-                }
-            }
-            if (item.val() !== "" && item.val().toString().search(/^[0-9]+$/) === 0) {
-                switch (item.data("field")) {
-                  case "y":
-                    w.theDate.setD(0, cleanVal);
-                    break;
-
-                  case "m":
-                    w.theDate.setD(1, cleanVal - 1);
-                    break;
-
-                  case "d":
-                    w.theDate.setD(2, cleanVal);
-                    t += 60 * 60 * 24 * cleanVal;
-                    break;
-
-                  case "h":
-                    w.theDate.setD(3, cleanVal);
-                    t += 60 * 60 * cleanVal;
-                    break;
-
-                  case "i":
-                    w.theDate.setD(4, cleanVal);
-                    t += 60 * cleanVal;
-                    break;
-
-                  case "s":
-                    w.theDate.setD(5, cleanVal);
-                    t += cleanVal;
-                    break;
-                }
-            }
             if (this.options.mode === "durationbox") {
+                w.d.intHTML.find("input").each(function() {
+                    cleanVal = parseInt($(this).val(), 10);
+                    switch ($(this).data("field")) {
+                      case "d":
+                        t += 60 * 60 * 24 * cleanVal;
+                        break;
+
+                      case "h":
+                        t += 60 * 60 * cleanVal;
+                        break;
+
+                      case "i":
+                        t += 60 * cleanVal;
+                        break;
+
+                      case "s":
+                        t += cleanVal;
+                        break;
+                    }
+                });
                 w.theDate.setTime(w.initDate.getTime() + t * 1e3);
+            } else {
+                if (item.data("field") === "M") {
+                    tmp = w.__("monthsOfYearShort").indexOf(item.val());
+                    if (tmp > -1) {
+                        w.theDate.setMonth(tmp);
+                    }
+                }
+                if (item.val() !== "" && item.val().toString().search(/^[0-9]+$/) === 0) {
+                    switch (item.data("field")) {
+                      case "y":
+                        w.theDate.setD(0, cleanVal);
+                        break;
+
+                      case "m":
+                        w.theDate.setD(1, cleanVal - 1);
+                        break;
+
+                      case "d":
+                        w.theDate.setD(2, cleanVal);
+                        break;
+
+                      case "h":
+                        w.theDate.setD(3, cleanVal);
+                        break;
+
+                      case "i":
+                        w.theDate.setD(4, cleanVal);
+                        break;
+
+                      case "s":
+                        w.theDate.setD(5, cleanVal);
+                        break;
+                    }
+                }
             }
             setTimeout(function() {
                 w.refresh();
