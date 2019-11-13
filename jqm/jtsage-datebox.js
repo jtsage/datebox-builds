@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.3.1 (jqm)
+ * JTSage-DateBox-5.3.2 (jqm)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.8.0","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.2.0","noframe":"0.0.1"}
- * Date: 2019-11-11T18:30:43.700Z
+ * Date: 2019-11-13T21:58:20.869Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -101,6 +101,7 @@ if (typeof Object.assign != "function") {
             minYear: false,
             blackDates: false,
             blackDatesRec: false,
+            blackDatesPeriod: false,
             blackDays: false,
             whiteDates: false,
             enableDates: false,
