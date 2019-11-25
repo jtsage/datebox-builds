@@ -1,7 +1,7 @@
 /*
- * JTSage-DateBox-5.3.2 (jqm)
+ * JTSage-DateBox-5.3.3 (jqm)
  * For: {"bootstrap-v4":"4.3.1","bootstrap-v3":"3.4.1","zurb-foundation":"6.5.3","bulma":"0.8.0","jquery-mobile":"1.4.5","fomantic-ui":"2.7.2","uikit":"3.2.0","noframe":"0.0.1"}
- * Date: 2019-11-13T21:58:20.869Z
+ * Date: 2019-11-25T16:45:15.944Z
  * http://datebox.jtsage.dev/
  * https://github.com/jtsage/jtsage-datebox
  *
@@ -1035,7 +1035,7 @@ if (typeof Object.assign != "function") {
                 }
                 i = testOption[0].split("-");
                 j = new Date(i[0], i[1] - 1, i[2], 12, 1, 1, 1);
-                k = Math.floor((testDate.getTime() - j.getTime()) / (1e3 * 3600 * 24));
+                k = Math.round((testDate.getTime() - j.getTime()) / (1e3 * 3600 * 24));
                 if (k % testOption[1] === 0) {
                     return true;
                 } else {
@@ -1176,7 +1176,7 @@ if (typeof Object.assign != "function") {
                 }
                 i = testOption[0].split("-");
                 j = new Date(i[0], i[1] - 1, i[2], 12, 1, 1, 1);
-                k = Math.floor((testDate.getTime() - j.getTime()) / (1e3 * 3600 * 24));
+                k = Math.round((testDate.getTime() - j.getTime()) / (1e3 * 3600 * 24));
                 if (k % testOption[1] === 0) {
                     return true;
                 } else {
